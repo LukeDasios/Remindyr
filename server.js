@@ -26,7 +26,13 @@ function validateNames(names) {
 }
 
 function generateCode() {
-  
+  let code = ""
+
+  for (let i = 0; i < 3; i++) {
+    code += (Math.random() * 10).toString()
+  }
+
+  return code
 }
 
 app.listen(PORT, () => {
@@ -66,8 +72,19 @@ app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
 
   if (validateNames(names)) {
     // Send a confirmation text to the lender saying that their debt collector has been deployed
+    let borrowers = ""
+    for (let i = 0; i < names.length; i++) {
+      let str = ""
+      if (i !== names.length - 1) {
+        str = `${names[i]}, `
+      } else {
+        str = `and ${names[i]}`
+      }
+      borrowers += str
+    }
+
     client.messages.create({
-      body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind the borrower(s) every day until you get your 💸`,
+      body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind ${borrowers} every day until you get your ${amount} back.`,
       from: TWILIO_PHONE_NUMBER,
       to: sender,
     })
@@ -80,22 +97,17 @@ app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
       client.messages.create({
         body: `Hi ${names[i]}! My name is Vecna, I'm a debt collector working for ${sender}. It has come to my attention that you owe my client $${amount}. Respond with ${code} when you've paid your debts and I'll leave your soul alone.`,
         from: TWILIO_PHONE_NUMBER,
-        to: sender,
+        to: numbers[theBoys.indexOf(names[i])],
       })
     }
   } else {
-    // Send a text to the
+    // Send a text to the chore-collector requester to say that the message has failed
     client.messages.create({
       body: `Your debt collector has not been deployed. Text me "debt-collector" to learn how to properly use this service.`,
       from: TWILIO_PHONE_NUMBER,
       to: sender,
     })
   }
-
-  res.send({
-    names,
-    amount,
-  })
 })
 
 app.get("/chore-pinger", (req, res) => {})
