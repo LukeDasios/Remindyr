@@ -4,6 +4,7 @@ const app = express()
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
 const AUTH_TOKEN = process.env.AUTH_TOKEN
+const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 
 const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN)
 
@@ -22,6 +23,10 @@ function whoIsNext(num) {
 
 function validateNames(names) {
   return names.every((name) => theBoys.includes(name))
+}
+
+function generateCode() {
+  
 }
 
 app.listen(PORT, () => {
@@ -49,7 +54,7 @@ app.get("/help", (req, res) => {
 // Cron-job that runs once a day, and messages everyone who has an outstanding debt
 app.get("/debt-collector", (req, res) => {})
 
-app.get("/debt-collector/:persons/:amount", (req, res) => {
+app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
   let obj = req.params
   let names = obj.persons
     .split("")
@@ -57,22 +62,34 @@ app.get("/debt-collector/:persons/:amount", (req, res) => {
     .join("")
     .split(",")
   let amount = parseFloat(obj.amount)
+  let sender = obj.sender
 
   if (validateNames(names)) {
-    // Send a confirmation text to the lender saying that the collector has been deployed
+    // Send a confirmation text to the lender saying that their debt collector has been deployed
     client.messages.create({
-      body: `
-      Commands:
-
-      help -> see all commands
-      debt-collector -> see how to use the debt-collector service
-      `,
+      body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind the borrower(s) every day until you get your 💸`,
       from: TWILIO_PHONE_NUMBER,
-      to: numbers[iter], // Whoever requested this info, get from req.body
+      to: sender,
     })
 
-    // Send an initial text to the borrow saying that they owe the lender $
+    // Send an initial text to the borrower(s) saying that they owe the lender $
+    amount = (amount / names.length).toFixed(2)
+    code = generateCode()
+
+    for (let i = 0; i < names.length; i++) {
+      client.messages.create({
+        body: `Hi ${names[i]}! My name is Vecna, I'm a debt collector working for ${sender}. It has come to my attention that you owe my client $${amount}. Respond with ${code} when you've paid your debts and I'll leave your soul alone.`,
+        from: TWILIO_PHONE_NUMBER,
+        to: sender,
+      })
+    }
   } else {
+    // Send a text to the
+    client.messages.create({
+      body: `Your debt collector has not been deployed. Text me "debt-collector" to learn how to properly use this service.`,
+      from: TWILIO_PHONE_NUMBER,
+      to: sender,
+    })
   }
 
   res.send({
