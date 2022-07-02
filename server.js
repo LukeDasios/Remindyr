@@ -28,9 +28,7 @@ function validateNames(names) {
 }
 
 function validDebtCollectorUsage(msg) {
-  let msg = "debt-collector Luke,    Duncan    , Sam | 56.99 "
-
-  msg = msg.slice(15).trim()
+  msg = msg.trim().slice(15)
 
   let i = 0
   let names = []
@@ -54,9 +52,8 @@ function validDebtCollectorUsage(msg) {
     i++
   }
 
-  amount = parseFloat(parseFloat(amount).toFixed(2))
+  amount = parseFloat((parseFloat(amount) / names.length).toFixed(2))
 
-  // validate that the names are correct
   let flag = true
   for (i = 0; i < names.length; i++) {
     if (!theBoys.includes(names[i])) flag = false
@@ -65,12 +62,17 @@ function validDebtCollectorUsage(msg) {
   if (amount < 0) flag = false
 
   if (flag) {
-    let obj = {
+    return {
+      bool: true,
       names: [...names],
       amount: amount,
     }
-
-    console.log(obj, typeof amount)
+  } else {
+    return {
+      bool: false,
+      names: null,
+      amount: null,
+    }
   }
 }
 
@@ -208,6 +210,7 @@ app.get("/see-state", (req, res) => {
 })
 
 app.post("/sms", (req, res) => {
+  console.log(req.body)
   let msg = req.body.Body.trim().toLowerCase()
   const twiml = new MessagingResponse()
 
@@ -221,15 +224,35 @@ app.post("/sms", (req, res) => {
     `)
   } else if (msg.includes("origin")) {
     twiml.message(`
-    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory. Why would you sweat trying to remember the small stuff when you've bigger on the horizon. That's where I come in to help. I take care of keeping track of the small stuff so you can focus on what really matters ❤️
+    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory. Why would you sweat trying to remember the small stuff when you've bigger things on the horizon. That's where I come in to help. I take care of keeping track of the small stuff so you can focus on what really matters ❤️
     `)
   } else if (msg.includes("debt-collector")) {
+    let obj = validDebtCollectorUsage(msg)
+    let bool = obj.bool
+    let names = obj.names
+    let amount = obj.amount
+
     if (msg.length === 14) {
       twiml.message(`
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
     `)
-    } else if (validDebtCollectorUsage(msg)) {
-      // Stores a valid chore-collection job
+    } else if (bool) {
+      // Creates and stores a valid debt-collector job
+
+      // Sends a confirmation message to the collector
+      twiml.message(`
+      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
+    `)
+
+      //Sends an initial message to the borrowers
+      for (let i = 0; i < names.length; i++) {
+        let code = generateCode()
+        client.messages.create({
+          body: `Hi ${names[i]}! You owe `,
+          to: "",
+          from: TWILIO_PHONE_NUMBER,
+        })
+      }
     } else {
       twiml.message(
         `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
