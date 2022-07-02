@@ -27,6 +27,8 @@ function validateNames(names) {
   return names.every((name) => theBoys.includes(name))
 }
 
+function validDebtCollectorUsage(str) {}
+
 function generateCode() {
   let code = ""
 
@@ -177,9 +179,16 @@ app.post("/sms", (req, res) => {
     You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory. Why would you sweat trying to remember the small stuff when you've bigger on the horizon. That's where I come in to help. I take care of keeping track of the small stuff so you can focus on what really matters ❤️
     `)
   } else if (msg.includes("debt-collector")) {
-    twiml.message(`
+    if (msg.length === 14) {
+      twiml.message(`
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
     `)
+    } else if (validDebtCollectorUsage(msg)) {
+    } else {
+      twiml.message(
+        `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+      )
+    }
   } else {
     twiml.message(
       `Sorry, I don't understand. Text me "commands" to learn about how I can assist you.`
