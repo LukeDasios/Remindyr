@@ -1,5 +1,6 @@
 require("dotenv").config()
 const app = require("express")()
+const bodyParser = require("body-parser")
 
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
@@ -35,6 +36,8 @@ function generateCode() {
 
   return code
 }
+
+app.use(bodyParser.urlencoded({ extended: false }))
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${3000}...`)
@@ -91,22 +94,6 @@ app.get("/once_per_month", (req, res) => {
       to: numbers[i],
     })
   }
-})
-
-// Upon receiving a "help" message from a user, respond with what Chore-Bot can do
-app.get("/help/:from", (req, res) => {
-  let sender = req.params.from
-
-  client.messages.create({
-    body: `
-    Commands:
-
-    help -> see all commands
-    debt-collector -> see how to use the debt-collector service
-    `,
-    from: TWILIO_PHONE_NUMBER,
-    to: sender, // Whoever requested this info, get from req.body
-  })
 })
 
 // Cron-job that runs once a day, and messages everyone who has an outstanding debt
@@ -174,9 +161,30 @@ app.get("/see-state", (req, res) => {
 })
 
 app.post("/sms", (req, res) => {
+  let msg = req.body.Body.trim().toLowerCase()
   const twiml = new MessagingResponse()
 
-  twiml.message("The Robots are coming! Head for the hills!")
+  if (msg.includes("commands")) {
+    twiml.message(`
+    Commands:
+
+    commands -> learn about all the ways I'm here to help you
+    origin -> learn about why I exist
+    debt-collector -> see how to use the debt-collector service
+    `)
+  } else if (msg.includes("origin")) {
+    twiml.message(`
+    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory. Why would you sweat trying to remember the small stuff when you've bigger on the horizon. That's where I come in to help. I take care of keeping track of the small stuff so you can focus on what really matters ❤️
+    `)
+  } else if (msg.includes("debt-collector")) {
+    twiml.message(`
+      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
+    `)
+  } else {
+    twiml.message(
+      `Sorry, I don't understand. Text me "commands" to learn about how I can assist you.`
+    )
+  }
 
   res.writeHead(200, { "Content-Type": "text/xml" })
   res.end(twiml.toString())
