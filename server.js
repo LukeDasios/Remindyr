@@ -1,19 +1,19 @@
 require("dotenv").config()
-const express = require("express")
-const app = express()
+const app = require("express")()
+
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
 const AUTH_TOKEN = process.env.AUTH_TOKEN
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 
 const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN)
-const textReponse = require("twilio").twiml.TextReponse
+const MessagingResponse = require("twilio").twiml.MessagingResponse
 
-let garbageWeek = true
+let garbageWeek = false
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
-let iter = 1
-let towel = 3
+let iter = 2
+let towel = 0
 
 // Borrower: [Lender, Amount]
 let oustandingDebts = new Map() // Maps names to how much is owed and to who
@@ -42,7 +42,6 @@ app.listen(PORT, () => {
 
 app.get("/", (req, res) => {
   res.send("Hello there!")
-  console.log("The message was sent!")
 })
 
 app.get("/once_per_hour", (req, res) => {
@@ -61,15 +60,37 @@ app.get("/once_per_selected_days", (req, res) => {
   let date = Date.now()
   let day = date.getDay()
 
-  if (day === 6) { //Saturday
-
-  } else { //Sunday
-
+  if (day === 6) {
+    //Saturday
+    client.messages.create({
+      body: `Good Afternoon ${
+        theBoys[iter]
+      }! Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
+        iter
+      )} may start their week with a clean slate. After that, you are free!`,
+      from: TWILIO_PHONE_NUMBER,
+      to: numbers[iter],
+    })
+    iter = iter == 3 ? 0 : iter + 1
+  } else {
+    //Sunday
+    client.messages.create({
+      body: `Good Evening ${theBoys[iter]}! Heads up, You're on garbage duty this week.`,
+      from: TWILIO_PHONE_NUMBER,
+      to: numbers[iter],
+    })
   }
 })
 
 app.get("/once_per_month", (req, res) => {
-  res.send("Testing!")
+  // Rent reminder
+  for (let i = 0; i < theBoys.length; i++) {
+    client.messages.create({
+      body: `Good Evening ${theBoys[i]}! Heads up, rent is due today to Suthy.`,
+      from: TWILIO_PHONE_NUMBER,
+      to: numbers[i],
+    })
+  }
 })
 
 // Upon receiving a "help" message from a user, respond with what Chore-Bot can do
@@ -141,10 +162,22 @@ app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
   }
 })
 
-app.get("/chore-pinger", (req, res) => {})
-
 // Testing the endpoint
-app.get("/receiver", (req, res) => {
-  console.log(req)
-  res.send("Thanks!")
+app.post("/receiver", (req, res) => {
+  console.log(req.body)
+})
+
+app.get("/see-state", (req, res) => {
+  let state = {}
+
+  res.send(state)
+})
+
+app.post("/sms", (req, res) => {
+  const twiml = new MessagingResponse()
+
+  twiml.message("The Robots are coming! Head for the hills!")
+
+  res.writeHead(200, { "Content-Type": "text/xml" })
+  res.end(twiml.toString())
 })
