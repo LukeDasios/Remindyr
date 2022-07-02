@@ -58,14 +58,18 @@ app.get("/once_per_day", (req, res) => {
 })
 
 app.get("/once_per_selected_days", (req, res) => {
-  res.send("Testing!")
-  // Start of Week + End of week messages
+  let date = Date.now()
+  let day = date.getDay()
 
+  if (day === 6) { //Saturday
+
+  } else { //Sunday
+
+  }
 })
 
 app.get("/once_per_month", (req, res) => {
   res.send("Testing!")
-
 })
 
 // Upon receiving a "help" message from a user, respond with what Chore-Bot can do
@@ -141,6 +145,6 @@ app.get("/chore-pinger", (req, res) => {})
 
 // Testing the endpoint
 app.get("/receiver", (req, res) => {
-  console.log(res.body)
+  console.log(req)
   res.send("Thanks!")
 })
