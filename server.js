@@ -27,7 +27,52 @@ function validateNames(names) {
   return names.every((name) => theBoys.includes(name))
 }
 
-function validDebtCollectorUsage(str) {}
+function validDebtCollectorUsage(msg) {
+  let msg = "debt-collector Luke,    Duncan    , Sam | 56.99 "
+
+  msg = msg.slice(15).trim()
+
+  let i = 0
+  let names = []
+  let amount = ""
+  let temp = ""
+
+  while (i < msg.length) {
+    let char = msg[i]
+    if (char === "|") {
+      names.push(temp)
+      for (let j = i + 2; j < msg.length; j++) {
+        amount += msg[j]
+      }
+      i = msg.length
+    } else if (char === ",") {
+      names.push(temp)
+      temp = ""
+    } else {
+      if (char !== " ") temp += char
+    }
+    i++
+  }
+
+  amount = parseFloat(parseFloat(amount).toFixed(2))
+
+  // validate that the names are correct
+  let flag = true
+  for (i = 0; i < names.length; i++) {
+    if (!theBoys.includes(names[i])) flag = false
+  }
+
+  if (amount < 0) flag = false
+
+  if (flag) {
+    let obj = {
+      names: [...names],
+      amount: amount,
+    }
+
+    console.log(obj, typeof amount)
+  }
+}
 
 function generateCode() {
   let code = ""
@@ -184,6 +229,7 @@ app.post("/sms", (req, res) => {
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
     `)
     } else if (validDebtCollectorUsage(msg)) {
+      // Stores a valid chore-collection job
     } else {
       twiml.message(
         `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
