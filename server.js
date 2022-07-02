@@ -7,6 +7,7 @@ const AUTH_TOKEN = process.env.AUTH_TOKEN
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 
 const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN)
+const textReponse = require("twilio").twiml.TextReponse
 
 let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
@@ -41,10 +42,36 @@ app.listen(PORT, () => {
 
 app.get("/", (req, res) => {
   res.send("Hello there!")
+  console.log("The message was sent!")
+})
+
+app.get("/once_per_hour", (req, res) => {
+  res.send("Testing!")
+  // Check to see if there are any outstanding important chores
+  // Message the person with the outstanding important chore
+})
+
+app.get("/once_per_day", (req, res) => {
+  res.send("Testing!")
+  // Check to see if there are any outstanding debts
+  // Message everyone with an outstanding debt
+})
+
+app.get("/once_per_selected_days", (req, res) => {
+  res.send("Testing!")
+  // Start of Week + End of week messages
+
+})
+
+app.get("/once_per_month", (req, res) => {
+  res.send("Testing!")
+
 })
 
 // Upon receiving a "help" message from a user, respond with what Chore-Bot can do
-app.get("/help", (req, res) => {
+app.get("/help/:from", (req, res) => {
+  let sender = req.params.from
+
   client.messages.create({
     body: `
     Commands:
@@ -53,7 +80,7 @@ app.get("/help", (req, res) => {
     debt-collector -> see how to use the debt-collector service
     `,
     from: TWILIO_PHONE_NUMBER,
-    to: numbers[iter], // Whoever requested this info, get from req.body
+    to: sender, // Whoever requested this info, get from req.body
   })
 })
 
@@ -84,7 +111,7 @@ app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
     }
 
     client.messages.create({
-      body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind ${borrowers} every day until you get your ${amount} back.`,
+      body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind ${borrowers} every day until you get your $${amount} back.`,
       from: TWILIO_PHONE_NUMBER,
       to: sender,
     })
@@ -101,9 +128,9 @@ app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
       })
     }
   } else {
-    // Send a text to the chore-collector requester to say that the message has failed
+    // Send a text to the debt-collector requester to say that the message has failed
     client.messages.create({
-      body: `Your debt collector has not been deployed. Text me "debt-collector" to learn how to properly use this service.`,
+      body: `Your debt collector has not been deployed :(. Text me "debt-collector" to learn how to properly use this service.`,
       from: TWILIO_PHONE_NUMBER,
       to: sender,
     })
