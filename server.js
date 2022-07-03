@@ -21,15 +21,10 @@ let towel = 0
 let oustandingTowelChore = new Map() // Maps names to the verification code
 
 // Chore-Assignee -> verification code
-let outStandingGarbageChore = new Map() // Maps names to the verification code
+let outstandingGarbageChore = new Map() // Maps names to the verification code
 
 // Borrower -> [Lender, Code, Amount]
-let oustandingDebts = new Map() // Maps names to who is owed, the verification code, and the amount
-for (let i = 0; i < theBoys.length; i++) {
-  let name = theBoys[i]
-  oustandingDebts.set(name, [])
-  oustandingChores.set(name, [])
-}
+let oustandingDebt = new Map() // Maps names to who is owed, the verification code, and the amount
 
 function whoIsNext(num) {
   num === 3 ? "Luke" : theBoys[num + 1]
@@ -299,35 +294,44 @@ app.post("/sms", (req, res) => {
         `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
       )
     }
-  } else if (msg.length === 5 && msg[0] === "C") {
+  } else if (msg.length === 5) {
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
-      let temp = outstandingTowelChore.get(sender)
+      let temp = outstandingTowelChore.has(sender)
+        ? outstandingTowelChore.get(sender)
+        : ""
+
       if (temp === msg) {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
         )
-        outStandingTowelChore.set(sender)
+        outstandingTowelChore.delete(sender)
       } else {
         twiml.message(
-          `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+          `Sorry, I don't understand. Are you sure that's a valid code?`
         )
       }
     } else if (msg[0] === "G") {
       // The person is trying to confirm the completion of the garbage chore
-      let temp = outstandingGarbageChore.get(sender)
+      let temp = oustandingGarbageChore.has(sender)
+        ? outstandingGarbageChore.get(sender)
+        : ""
+
       if (temp === msg) {
         twiml.message(
-          `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+          `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
         )
+        outStandingGarbageChore.delete(sender)
       } else {
         twiml.message(
-          `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+          `Sorry, I don't understand. Are you sure that's a valid code?`
         )
       }
     } else {
       // The person is trying to confirm the repayment of some debt
-      let arr = oustandingDebts.get(sender)
+      let temp = outstandingDebt.get(sender)
+      // [lender, code, amount]
+
     }
 
     if (arr.includes(msg)) {
