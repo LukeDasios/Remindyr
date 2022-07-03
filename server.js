@@ -1,6 +1,7 @@
 require("dotenv").config()
 const app = require("express")()
 const bodyParser = require("body-parser")
+const e = require("express")
 
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
@@ -16,16 +17,18 @@ const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
 let iter = 2
 let towel = 0
 
+// Chore-Assignee -> verification code
+let oustandingTowelChore = new Map() // Maps names to the verification code
+
+// Chore-Assignee -> verification code
+let outStandingGarbageChore = new Map() // Maps names to the verification code
+
 // Borrower -> [Lender, Code, Amount]
 let oustandingDebts = new Map() // Maps names to who is owed, the verification code, and the amount
 for (let i = 0; i < theBoys.length; i++) {
-  oustandingDebts.set(theBoys[i], [])
-}
-
-// Chore-Assignee -> verification code
-let oustandingChores = new Map() // Maps names to the verification code
-for (let i = 0; i < theBoys.length; i++) {
-  oustandingDebts.set(theBoys[i], [])
+  let name = theBoys[i]
+  oustandingDebts.set(name, [])
+  oustandingChores.set(name, [])
 }
 
 function whoIsNext(num) {
@@ -85,10 +88,20 @@ function validDebtCollectorUsage(msg) {
   }
 }
 
-function generateChoreCode() {
-  let code = "C"
+function generateGarbageChoreCode() {
+  let code = "G"
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
+    code += (Math.random() * 10).toString()
+  }
+
+  return code
+}
+
+function generateTowelChoreCode() {
+  let code = "T"
+
+  for (let i = 0; i < 3; i++) {
     code += (Math.random() * 10).toString()
   }
 
@@ -96,9 +109,9 @@ function generateChoreCode() {
 }
 
 function generateDebtCollectionCode() {
-  let code = "D"
+  let code = "C"
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     code += (Math.random() * 10).toString()
   }
 
@@ -287,13 +300,40 @@ app.post("/sms", (req, res) => {
       )
     }
   } else if (msg.length === 5 && msg[0] === "C") {
-    // The person is trying to confirm the completion of an important chore
-    let arr = outstanding
-  } else if (msg.length === 5 && msg[0] === "D") {
-    // The person is trying to confirm the payment of a loan
-    let arr = outstandingDebts.get(sender)
+    if (msg[0] === "T") {
+      // The person is trying to confirm the completion of the towel chore
+      let temp = outstandingTowelChore.get(sender)
+      if (temp === msg) {
+        twiml.message(
+          `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
+        )
+        outStandingTowelChore.set(sender)
+      } else {
+        twiml.message(
+          `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+        )
+      }
+    } else if (msg[0] === "G") {
+      // The person is trying to confirm the completion of the garbage chore
+      let temp = outstandingGarbageChore.get(sender)
+      if (temp === msg) {
+        twiml.message(
+          `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+        )
+      } else {
+        twiml.message(
+          `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
+        )
+      }
+    } else {
+      // The person is trying to confirm the repayment of some debt
+      let arr = oustandingDebts.get(sender)
+    }
 
-    for (let i = 0; i < arr.length; i++) {}
+    if (arr.includes(msg)) {
+      // Send a text back saying that they have succesfully confirmed the completion of their chore
+      twiml.message(`Hi ${sender}! Thanks for doing the towels!`)
+    }
   } else {
     twiml.message(
       `Sorry, I don't understand. Text me "commands" to learn about how I can assist you.`
