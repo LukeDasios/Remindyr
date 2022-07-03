@@ -16,8 +16,14 @@ const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
 let iter = 2
 let towel = 0
 
-// Borrower: [Lender, Amount]
-let oustandingDebts = new Map() // Maps names to how much is owed and to who
+// Borrower -> [Lender, Code, Amount]
+let oustandingDebts = new Map() // Maps names to who is owed, the verification code, and the amount
+for (let i = 0; i < theBoys.length; i++) {
+  oustandingDebts.set(theBoys[i], [])
+}
+
+// Chore-Assignee -> verification code
+let oustandingChores = new Map() // Maps names to the verification code
 for (let i = 0; i < theBoys.length; i++) {
   oustandingDebts.set(theBoys[i], [])
 }
@@ -79,10 +85,20 @@ function validDebtCollectorUsage(msg) {
   }
 }
 
-function generateCode() {
-  let code = ""
+function generateChoreCode() {
+  let code = "C"
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
+    code += (Math.random() * 10).toString()
+  }
+
+  return code
+}
+
+function generateDebtCollectionCode() {
+  let code = "D"
+
+  for (let i = 0; i < 4; i++) {
     code += (Math.random() * 10).toString()
   }
 
@@ -151,55 +167,55 @@ app.get("/once_per_month", (req, res) => {
 // Cron-job that runs once a day, and messages everyone who has an outstanding debt
 app.get("/debt-collector", (req, res) => {})
 
-app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
-  let obj = req.params
-  let names = obj.persons
-    .split("")
-    .filter((el) => el !== " ")
-    .join("")
-    .split(",")
-  let amount = parseFloat(obj.amount)
-  let sender = obj.sender
+// app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
+//   let obj = req.params
+//   let names = obj.persons
+//     .split("")
+//     .filter((el) => el !== " ")
+//     .join("")
+//     .split(",")
+//   let amount = parseFloat(obj.amount)
+//   let sender = obj.sender
 
-  if (validateNames(names)) {
-    // Send a confirmation text to the lender saying that their debt collector has been deployed
-    let borrowers = ""
-    for (let i = 0; i < names.length; i++) {
-      let str = ""
-      if (i !== names.length - 1) {
-        str = `${names[i]}, `
-      } else {
-        str = `and ${names[i]}`
-      }
-      borrowers += str
-    }
+//   if (validateNames(names)) {
+//     // Send a confirmation text to the lender saying that their debt collector has been deployed
+//     let borrowers = ""
+//     for (let i = 0; i < names.length; i++) {
+//       let str = ""
+//       if (i !== names.length - 1) {
+//         str = `${names[i]}, `
+//       } else {
+//         str = `and ${names[i]}`
+//       }
+//       borrowers += str
+//     }
 
-    client.messages.create({
-      body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind ${borrowers} every day until you get your $${amount} back.`,
-      from: TWILIO_PHONE_NUMBER,
-      to: sender,
-    })
+//     client.messages.create({
+//       body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind ${borrowers} every day until you get your $${amount} back.`,
+//       from: TWILIO_PHONE_NUMBER,
+//       to: sender,
+//     })
 
-    // Send an initial text to the borrower(s) saying that they owe the lender $
-    amount = (amount / names.length).toFixed(2)
-    code = generateCode()
+//     // Send an initial text to the borrower(s) saying that they owe the lender $
+//     amount = (amount / names.length).toFixed(2)
+//     code = generateDebtCollectionCode()
 
-    for (let i = 0; i < names.length; i++) {
-      client.messages.create({
-        body: `Hi ${names[i]}! My name is Vecna, I'm a debt collector working for ${sender}. It has come to my attention that you owe my client $${amount}. Respond with ${code} when you've paid your debts and I'll leave your soul alone.`,
-        from: TWILIO_PHONE_NUMBER,
-        to: numbers[theBoys.indexOf(names[i])],
-      })
-    }
-  } else {
-    // Send a text to the debt-collector requester to say that the message has failed
-    client.messages.create({
-      body: `Your debt collector has not been deployed :(. Text me "debt-collector" to learn how to properly use this service.`,
-      from: TWILIO_PHONE_NUMBER,
-      to: sender,
-    })
-  }
-})
+//     for (let i = 0; i < names.length; i++) {
+//       client.messages.create({
+//         body: `Hi ${names[i]}! My name is Vecna, I'm a debt collector working for ${sender}. It has come to my attention that you owe my client $${amount}. Respond with ${code} when you've paid your debts and I'll leave your soul alone.`,
+//         from: TWILIO_PHONE_NUMBER,
+//         to: numbers[theBoys.indexOf(names[i])],
+//       })
+//     }
+//   } else {
+//     // Send a text to the debt-collector requester to say that the message has failed
+//     client.messages.create({
+//       body: `Your debt collector has not been deployed :(. Text me "debt-collector" to learn how to properly use this service.`,
+//       from: TWILIO_PHONE_NUMBER,
+//       to: sender,
+//     })
+//   }
+// })
 
 // Testing the endpoint
 app.post("/receiver", (req, res) => {
@@ -215,7 +231,8 @@ app.get("/see-state", (req, res) => {
 app.post("/sms", (req, res) => {
   console.log(req.body)
   let msg = req.body.Body.trim().toLowerCase()
-  let sender = theBoys[numbers.indexOf(req.body.From)]
+  let senderNumber = req.body.From
+  let sender = theBoys[numbers.indexOf(senderNumber)]
   const twiml = new MessagingResponse()
 
   if (msg.includes("commands")) {
@@ -246,7 +263,7 @@ app.post("/sms", (req, res) => {
         `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed. I will notify you when I am told the job is done!`
       )
 
-      let code = generateCode()
+      let code = generateDebtCollectionCode()
 
       for (let i = 0; i < names.length; i++) {
         //Sends an initial message to each borrower
@@ -261,7 +278,7 @@ app.post("/sms", (req, res) => {
           names[i],
           oustandingDebts
             .get(names[i])
-            .push([theBoys[numbers.indexOf(sender)]], amount)
+            .push([theBoys[numbers.indexOf(sender)]], amount, code)
         )
       }
     } else {
@@ -269,6 +286,14 @@ app.post("/sms", (req, res) => {
         `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
       )
     }
+  } else if (msg.length === 5 && msg[0] === "C") {
+    // The person is trying to confirm the completion of an important chore
+    let arr = outstanding
+  } else if (msg.length === 5 && msg[0] === "D") {
+    // The person is trying to confirm the payment of a loan
+    let arr = outstandingDebts.get(sender)
+
+    for (let i = 0; i < arr.length; i++) {}
   } else {
     twiml.message(
       `Sorry, I don't understand. Text me "commands" to learn about how I can assist you.`
