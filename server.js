@@ -22,11 +22,8 @@ let oustandingTowelChore = new Map() // Maps names to the verification code
 // Chore-Assignee -> verification code
 let outstandingGarbageChore = new Map() // Maps names to the verification code
 
-// Borrower -> [Lender, Code, Amount]
-let oustandingDebt = new Map() // Maps names to who is owed, the verification code, and the amount
-for (let i = 0; i < theBoys.length; i++) {
-  outstandingDebt.set(theBoys[i], [])
-}
+// [Lender, Borrower, Code, Amount]
+let outstandingDebt = []
 
 function whoIsNext(num) {
   num === 3 ? "Luke" : theBoys[num + 1]
@@ -116,13 +113,10 @@ function generateDebtCollectionCode() {
 }
 
 app.use(bodyParser.urlencoded({ extended: false }))
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${3000}...`)
-})
+app.listen(PORT)
 
 app.get("/", (req, res) => {
-  res.send("Hello there!")
+  res.send("Go to /see-state to see the state of this application")
 })
 
 app.get("/once_per_hour", (req, res) => {
@@ -132,9 +126,17 @@ app.get("/once_per_hour", (req, res) => {
 })
 
 app.get("/once_per_day", (req, res) => {
-  res.send("Testing!")
-  // Check to see if there are any outstanding debts
   // Message everyone with an outstanding debt
+  for (let i = 0; i < outstandingDebt.length; i++) {
+    let temp = outstandingDebt[i]
+    client.messages.create({
+      body: `Hi ${temp[1]}! I'm a debt-collector. It has come to my attention that you owe my client ${temp[0]} an amount totalling $${temp[3]}. Please E-transfer him when you get a chance and reply with code ${temp[2]} when you have.`,
+      to: numbers[theBoys.indexOf(temp[1])],
+      from: TWILIO_PHONE_NUMBER,
+    })
+  }
+
+  res.send("Sent today's debt-collection reminders")
 })
 
 app.get("/once_per_selected_days", (req, res) => {
@@ -167,7 +169,7 @@ app.get("/once_per_month", (req, res) => {
   // Rent reminder
   for (let i = 0; i < theBoys.length; i++) {
     client.messages.create({
-      body: `Good Evening ${theBoys[i]}! Heads up, rent is due today to Suthy.`,
+      body: `Good Evening ${theBoys[i]}! Heads up, $625 in rent is due today.`,
       from: TWILIO_PHONE_NUMBER,
       to: numbers[i],
     })
@@ -176,69 +178,6 @@ app.get("/once_per_month", (req, res) => {
 
 // Cron-job that runs once a day, and messages everyone who has an outstanding debt
 app.get("/debt-collector", (req, res) => {})
-
-// app.get("/debt-collector/:from/:persons/:amount", (req, res) => {
-//   let obj = req.params
-//   let names = obj.persons
-//     .split("")
-//     .filter((el) => el !== " ")
-//     .join("")
-//     .split(",")
-//   let amount = parseFloat(obj.amount)
-//   let sender = obj.sender
-
-//   if (validateNames(names)) {
-//     // Send a confirmation text to the lender saying that their debt collector has been deployed
-//     let borrowers = ""
-//     for (let i = 0; i < names.length; i++) {
-//       let str = ""
-//       if (i !== names.length - 1) {
-//         str = `${names[i]}, `
-//       } else {
-//         str = `and ${names[i]}`
-//       }
-//       borrowers += str
-//     }
-
-//     client.messages.create({
-//       body: `Hi ${sender}! I'm Vecna, your personal debt collector. I'll remind ${borrowers} every day until you get your $${amount} back.`,
-//       from: TWILIO_PHONE_NUMBER,
-//       to: sender,
-//     })
-
-//     // Send an initial text to the borrower(s) saying that they owe the lender $
-//     amount = (amount / names.length).toFixed(2)
-//     code = generateDebtCollectionCode()
-
-//     for (let i = 0; i < names.length; i++) {
-//       client.messages.create({
-//         body: `Hi ${names[i]}! My name is Vecna, I'm a debt collector working for ${sender}. It has come to my attention that you owe my client $${amount}. Respond with ${code} when you've paid your debts and I'll leave your soul alone.`,
-//         from: TWILIO_PHONE_NUMBER,
-//         to: numbers[theBoys.indexOf(names[i])],
-//       })
-//     }
-//   } else {
-//     // Send a text to the debt-collector requester to say that the message has failed
-//     client.messages.create({
-//       body: `Your debt collector has not been deployed :(. Text me "debt-collector" to learn how to properly use this service.`,
-//       from: TWILIO_PHONE_NUMBER,
-//       to: sender,
-//     })
-//   }
-// })
-
-app.get("/see-state", (req, res) => {
-  let state = {
-    garbageWeek,
-    iter,
-    towel,
-    oustandingDebt,
-    outstandingGarbageChore,
-    outstandingTowelChore
-  }
-
-  res.send(state)
-})
 
 app.post("/sms", (req, res) => {
   console.log(req.body)
@@ -285,13 +224,7 @@ app.post("/sms", (req, res) => {
           from: TWILIO_PHONE_NUMBER,
         })
 
-        // Creates and stores a valid debt-collector job for each borrower
-        oustandingDebts.set(
-          names[i],
-          oustandingDebts
-            .get(names[i])
-            .push([theBoys[numbers.indexOf(sender)]], amount, code)
-        )
+        outstandingDebt.push([sender, names[i], code, amount])
       }
     } else {
       twiml.message(
@@ -361,7 +294,9 @@ app.post("/sms", (req, res) => {
           from: TWILIO_PHONE_NUMBER,
         })
       } else {
-        twiml.message(`Hi ${sender}! You have no outstanding debts!`)
+        twiml.message(
+          `Sorry I don't understand. Are you sure that's a valid code?`
+        )
       }
     }
   } else {
@@ -372,4 +307,17 @@ app.post("/sms", (req, res) => {
 
   res.writeHead(200, { "Content-Type": "text/xml" })
   res.end(twiml.toString())
+})
+
+app.get("/see-state", (req, res) => {
+  let state = {
+    garbageWeek,
+    iter,
+    towel,
+    oustandingDebt,
+    outstandingGarbageChore,
+    outstandingTowelChore,
+  }
+
+  res.send(state)
 })
