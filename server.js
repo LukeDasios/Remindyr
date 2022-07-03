@@ -25,6 +25,9 @@ let outstandingGarbageChore = new Map() // Maps names to the verification code
 
 // Borrower -> [Lender, Code, Amount]
 let oustandingDebt = new Map() // Maps names to who is owed, the verification code, and the amount
+for (let i = 0; i < theBoys.length; i++) {
+  outstandingDebt.set(theBoys[i], [])
+}
 
 function whoIsNext(num) {
   num === 3 ? "Luke" : theBoys[num + 1]
@@ -253,7 +256,7 @@ app.post("/sms", (req, res) => {
     `)
   } else if (msg.includes("origin")) {
     twiml.message(`
-    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory. Why would you sweat trying to remember the small stuff when you've bigger things on the horizon. That's where I come in to help. I take care of keeping track of the small stuff so you can focus on what really matters ❤️
+    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why would you sweat trying to remember the small stuff when you've bigger things to think about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
     `)
   } else if (msg.includes("debt-collector")) {
     let obj = validDebtCollectorUsage(msg)
@@ -329,9 +332,18 @@ app.post("/sms", (req, res) => {
       }
     } else {
       // The person is trying to confirm the repayment of some debt
-      let temp = outstandingDebt.get(sender)
+      let temp = outstandingDebt.has(sender) ? oustandingDebt.get(sender) : []
       // [lender, code, amount]
-
+      if (temp.length === 3) {
+        let [lender, code, amount] = [...temp]
+        twiml.message(
+          `Sorry, I don't understand. Are you sure that's a valid code?`
+        )
+      } else {
+        twiml.message(
+          `Sorry, I don't understand. Are you sure that's a valid code?`
+        )
+      }
     }
 
     if (arr.includes(msg)) {
