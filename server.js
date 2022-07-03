@@ -18,6 +18,9 @@ let towel = 0
 
 // Borrower: [Lender, Amount]
 let oustandingDebts = new Map() // Maps names to how much is owed and to who
+for (let i = 0; i < theBoys.length; i++) {
+  oustandingDebts.set(theBoys[i], [])
+}
 
 function whoIsNext(num) {
   num === 3 ? "Luke" : theBoys[num + 1]
@@ -212,6 +215,7 @@ app.get("/see-state", (req, res) => {
 app.post("/sms", (req, res) => {
   console.log(req.body)
   let msg = req.body.Body.trim().toLowerCase()
+  let sender = theBoys[numbers.indexOf(req.body.From)]
   const twiml = new MessagingResponse()
 
   if (msg.includes("commands")) {
@@ -237,21 +241,28 @@ app.post("/sms", (req, res) => {
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
     `)
     } else if (bool) {
-      // Creates and stores a valid debt-collector job
-
       // Sends a confirmation message to the collector
-      twiml.message(`
-      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
-    `)
+      twiml.message(
+        `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed. I will notify you when I am told the job is done!`
+      )
 
-      //Sends an initial message to the borrowers
+      let code = generateCode()
+
       for (let i = 0; i < names.length; i++) {
-        let code = generateCode()
+        //Sends an initial message to each borrower
         client.messages.create({
-          body: `Hi ${names[i]}! You owe `,
-          to: "",
+          body: `Hi ${names[i]}! I'm a debt-collector. It has come to my attention that you owe my client ${sender} an amount totalling $${amount}. Please ET him when you get a chance and reply with code ${code} when you have.`,
+          to: numbers[theBoys.indexOf(names[i])],
           from: TWILIO_PHONE_NUMBER,
         })
+
+        // Creates and stores a valid debt-collector job for each borrower
+        oustandingDebts.set(
+          names[i],
+          oustandingDebts
+            .get(names[i])
+            .push([theBoys[numbers.indexOf(sender)]], amount)
+        )
       }
     } else {
       twiml.message(
