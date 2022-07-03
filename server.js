@@ -1,7 +1,6 @@
 require("dotenv").config()
 const app = require("express")()
 const bodyParser = require("body-parser")
-const e = require("express")
 
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
@@ -229,7 +228,14 @@ app.get("/debt-collector", (req, res) => {})
 // })
 
 app.get("/see-state", (req, res) => {
-  let state = {}
+  let state = {
+    garbageWeek,
+    iter,
+    towel,
+    oustandingDebt,
+    outstandingGarbageChore,
+    outstandingTowelChore
+  }
 
   res.send(state)
 })
