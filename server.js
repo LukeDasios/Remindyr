@@ -16,11 +16,11 @@ const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
 let iter = 2
 let towel = 0
 
-// Chore-Assignee -> verification code
-let oustandingTowelChore = new Map() // Maps names to the verification code
+// [Chore-Assignee, Code]
+let outstandingTowelChore = []
 
-// Chore-Assignee -> verification code
-let outstandingGarbageChore = new Map() // Maps names to the verification code
+// [Chore-Assignee, Code]
+let outstandingGarbageChore = []
 
 // [Lender, Borrower, Code, Amount]
 let outstandingDebt = []
@@ -120,9 +120,19 @@ app.get("/", (req, res) => {
 })
 
 app.get("/once_per_hour", (req, res) => {
-  res.send("Testing!")
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
+
+  let date = Date.now()
+  let day = date.getDay()
+
+  if (day === 2) {
+    // Garbage Day
+  } else {
+    // Towel Day
+  }
+
+  res.send("Sent an hourly important chore reminder!")
 })
 
 app.get("/once_per_day", (req, res) => {
@@ -143,12 +153,36 @@ app.get("/once_per_selected_days", (req, res) => {
   let date = Date.now()
   let day = date.getDay()
 
-  if (day === 6) {
+  if (day === 2) {
+    // Garbage day
+    let garbageCode = generateGarbageChoreCode()
+
+    client.messages.create({
+      body: garbageWeek
+        ? `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is completed. Cheers.`
+        : `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is completed. Cheers.`,
+      to: numbers[i],
+      from: TWILIO_PHONE_NUMBER,
+    })
+
+    garbage = !garbage
+  } else if (day === 4) {
+    // Towel day
+    let towelCode = generateTowelChoreCode()
+
+    client.messages.create({
+      body: `Good Afternoon ${theBoys[towel]}! It's your turn on towel duty! They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${towelCode} when the job is completed. Cheers.`,
+      to: numbers[towel],
+      from: TWILIO_PHONE_NUMBER,
+    })
+
+    towel = towel === 3 ? 0 : towel + 1
+  } else if (day === 6) {
     //Saturday
     client.messages.create({
       body: `Good Afternoon ${
         theBoys[iter]
-      }! Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
+      }! Please Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
         iter
       )} may start their week with a clean slate. After that, you are free!`,
       from: TWILIO_PHONE_NUMBER,
@@ -158,7 +192,7 @@ app.get("/once_per_selected_days", (req, res) => {
   } else {
     //Sunday
     client.messages.create({
-      body: `Good Evening ${theBoys[iter]}! Heads up, You're on garbage duty this week.`,
+      body: `Good Afternoon ${theBoys[iter]}! Heads up, You're on garbage duty this week.`,
       from: TWILIO_PHONE_NUMBER,
       to: numbers[iter],
     })
@@ -282,14 +316,14 @@ app.post("/sms", (req, res) => {
           }
         }
 
-        outstandingDebt.set(sender, outstandingDebt.get(sender).splice(loc, 1))
+        outstandingDebt.splice(loc, 1)
         twiml.message(
           `Hi ${sender}! I have confirmation that you paid the debt-collector $${amount} on behalf of his client, ${lender}. Thank you!`
         )
 
         // Text the lender telling them that the debt has been repaid
         client.messages.create({
-          body: `Hi ${lender}! I just received confirmation that your personal debt-collector has succesfully collected on the $${amount} that ${sender} owed you!`,
+          body: `Hi ${lender}! I just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you!`,
           to: theBoys[theBoys.indexOf(lender)],
           from: TWILIO_PHONE_NUMBER,
         })
