@@ -228,11 +228,6 @@ app.get("/debt-collector", (req, res) => {})
 //   }
 // })
 
-// Testing the endpoint
-app.post("/receiver", (req, res) => {
-  console.log(req.body)
-})
-
 app.get("/see-state", (req, res) => {
   let state = {}
 
@@ -271,7 +266,7 @@ app.post("/sms", (req, res) => {
     } else if (bool) {
       // Sends a confirmation message to the collector
       twiml.message(
-        `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed. I will notify you when I am told the job is done!`
+        `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed. I will notify you when the job is done!`
       )
 
       let code = generateDebtCollectionCode()
@@ -279,7 +274,7 @@ app.post("/sms", (req, res) => {
       for (let i = 0; i < names.length; i++) {
         //Sends an initial message to each borrower
         client.messages.create({
-          body: `Hi ${names[i]}! I'm a debt-collector. It has come to my attention that you owe my client ${sender} an amount totalling $${amount}. Please ET him when you get a chance and reply with code ${code} when you have.`,
+          body: `Hi ${names[i]}! I'm a debt-collector. It has come to my attention that you owe my client ${sender} an amount totalling $${amount}. Please E-transfer him when you get a chance and reply with code ${code} when you have.`,
           to: numbers[theBoys.indexOf(names[i])],
           from: TWILIO_PHONE_NUMBER,
         })
@@ -334,21 +329,34 @@ app.post("/sms", (req, res) => {
       // The person is trying to confirm the repayment of some debt
       let temp = outstandingDebt.has(sender) ? oustandingDebt.get(sender) : []
       // [lender, code, amount]
-      if (temp.length === 3) {
-        let [lender, code, amount] = [...temp]
-        twiml.message(
-          `Sorry, I don't understand. Are you sure that's a valid code?`
-        )
-      } else {
-        twiml.message(
-          `Sorry, I don't understand. Are you sure that's a valid code?`
-        )
-      }
-    }
+      if (temp.length > 0) {
+        let lender, amount, loc
+        let i = 0
+        while (i < temp.length) {
+          if (temp[i][1] === msg) {
+            lender = temp[i][0]
+            amount = temp[i][2]
+            loc = i
+            i = temp.length
+          } else {
+            i++
+          }
+        }
 
-    if (arr.includes(msg)) {
-      // Send a text back saying that they have succesfully confirmed the completion of their chore
-      twiml.message(`Hi ${sender}! Thanks for doing the towels!`)
+        outstandingDebt.set(sender, outstandingDebt.get(sender).splice(loc, 1))
+        twiml.message(
+          `Hi ${sender}! I have confirmation that you paid the debt-collector $${amount} on behalf of his client, ${lender}. Thank you!`
+        )
+
+        // Text the lender telling them that the debt has been repaid
+        client.messages.create({
+          body: `Hi ${lender}! I just received confirmation that your personal debt-collector has succesfully collected on the $${amount} that ${sender} owed you!`,
+          to: theBoys[theBoys.indexOf(lender)],
+          from: TWILIO_PHONE_NUMBER,
+        })
+      } else {
+        twiml.message(`Hi ${sender}! You have no outstanding debts!`)
+      }
     }
   } else {
     twiml.message(
