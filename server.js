@@ -26,11 +26,7 @@ let outstandingGarbageChore = []
 let outstandingDebt = []
 
 function whoIsNext(num) {
-  num === 3 ? "Luke" : theBoys[num + 1]
-}
-
-function validateNames(names) {
-  return names.every((name) => theBoys.includes(name))
+  return num === 3 ? "Luke" : theBoys[num + 1]
 }
 
 function validDebtCollectorUsage(msg) {
@@ -40,6 +36,7 @@ function validDebtCollectorUsage(msg) {
   let names = []
   let amount = ""
   let temp = ""
+  let flag = true
 
   while (i < msg.length) {
     let char = msg[i]
@@ -60,7 +57,6 @@ function validDebtCollectorUsage(msg) {
 
   amount = parseFloat((parseFloat(amount) / names.length).toFixed(2))
 
-  let flag = true
   for (i = 0; i < names.length; i++) {
     if (!theBoys.includes(names[i])) flag = false
   }
@@ -119,6 +115,19 @@ app.get("/", (req, res) => {
   res.send("Go to /see-state to see the state of this application")
 })
 
+app.get("/see-state", (req, res) => {
+  let state = {
+    garbageWeek,
+    iter,
+    towel,
+    oustandingDebt,
+    outstandingGarbageChore,
+    outstandingTowelChore,
+  }
+
+  res.send(state)
+})
+
 app.get("/once_per_hour", (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
@@ -128,8 +137,20 @@ app.get("/once_per_hour", (req, res) => {
 
   if (day === 2) {
     // Garbage Day
+    client.messages.create({
+      body: garbageWeek
+        ? `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[0][1]} when the job is done. Cheers.`
+        : `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[0][1]} when the job is done. Cheers.`,
+      to: numbers[iter],
+      from: TWILIO_PHONE_NUMBER,
+    })
   } else {
     // Towel Day
+    client.messages.create({
+      body: `Hi ${theBoys[towel]}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${outstandingTowelChore[0][1]} when the job is done. Cheers.`,
+      to: numbers[towel],
+      from: TWILIO_PHONE_NUMBER,
+    })
   }
 
   res.send("Sent an hourly important chore reminder!")
@@ -159,9 +180,9 @@ app.get("/once_per_selected_days", (req, res) => {
 
     client.messages.create({
       body: garbageWeek
-        ? `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is completed. Cheers.`
-        : `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is completed. Cheers.`,
-      to: numbers[i],
+        ? `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is done. Cheers.`
+        : `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is done. Cheers.`,
+      to: numbers[iter],
       from: TWILIO_PHONE_NUMBER,
     })
 
@@ -171,7 +192,7 @@ app.get("/once_per_selected_days", (req, res) => {
     let towelCode = generateTowelChoreCode()
 
     client.messages.create({
-      body: `Good Afternoon ${theBoys[towel]}! It's your turn on towel duty! They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${towelCode} when the job is completed. Cheers.`,
+      body: `Good Afternoon ${theBoys[towel]}! It's your turn on towel duty! They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${towelCode} when the job is done. Cheers.`,
       to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -185,16 +206,16 @@ app.get("/once_per_selected_days", (req, res) => {
       }! Please Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
         iter
       )} may start their week with a clean slate. After that, you are free!`,
-      from: TWILIO_PHONE_NUMBER,
       to: numbers[iter],
+      from: TWILIO_PHONE_NUMBER,
     })
     iter = iter == 3 ? 0 : iter + 1
   } else {
     //Sunday
     client.messages.create({
       body: `Good Afternoon ${theBoys[iter]}! Heads up, You're on garbage duty this week.`,
-      from: TWILIO_PHONE_NUMBER,
       to: numbers[iter],
+      from: TWILIO_PHONE_NUMBER,
     })
   }
 })
@@ -204,17 +225,14 @@ app.get("/once_per_month", (req, res) => {
   for (let i = 0; i < theBoys.length; i++) {
     client.messages.create({
       body: `Good Evening ${theBoys[i]}! Heads up, $625 in rent is due today.`,
-      from: TWILIO_PHONE_NUMBER,
       to: numbers[i],
+      from: TWILIO_PHONE_NUMBER,
     })
   }
 })
 
-// Cron-job that runs once a day, and messages everyone who has an outstanding debt
-app.get("/debt-collector", (req, res) => {})
-
 app.post("/sms", (req, res) => {
-  console.log(req.body)
+  // console.log(req.body)
   let msg = req.body.Body.trim().toLowerCase()
   let senderNumber = req.body.From
   let sender = theBoys[numbers.indexOf(senderNumber)]
@@ -224,13 +242,13 @@ app.post("/sms", (req, res) => {
     twiml.message(`
     Commands:
 
-    commands -> learn about all the ways I'm here to help you
+    commands -> learn about all the ways I'm here to help
     origin -> learn about why I exist
-    debt-collector -> see how to use the debt-collector service
+    debt-collector -> learn about how to hire a debt-collector
     `)
   } else if (msg.includes("origin")) {
     twiml.message(`
-    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why would you sweat trying to remember the small stuff when you've bigger things to think about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
+    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
     `)
   } else if (msg.includes("debt-collector")) {
     let obj = validDebtCollectorUsage(msg)
@@ -243,9 +261,22 @@ app.post("/sms", (req, res) => {
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
     `)
     } else if (bool) {
-      // Sends a confirmation message to the collector
+      let str = ""
+      if (names.length === 1) {
+        str = names[0]
+      } else {
+        for (let i = 0; i < names.length; i++) {
+          if (i !== names.length - 1) {
+            str += `${names[i]}, `
+          } else {
+            str += `and ${names[i]}`
+          }
+        }
+      }
+
+      // Sends a confirmation message to the lender
       twiml.message(
-        `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed. I will notify you when the job is done!`
+        `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed from ${str}. I will notify you when the job is done!`
       )
 
       let code = generateDebtCollectionCode()
@@ -265,18 +296,17 @@ app.post("/sms", (req, res) => {
         `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
       )
     }
-  } else if (msg.length === 5) {
+  } else if (msg.length === 4) {
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
-      let temp = outstandingTowelChore.has(sender)
-        ? outstandingTowelChore.get(sender)
-        : ""
+      let temp =
+        outstandingTowelChore.length === 1 ? outstandingTowelChore[0] : []
 
-      if (temp === msg) {
+      if (temp[1] === msg) {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
         )
-        outstandingTowelChore.delete(sender)
+        outstandingTowelChore.pop()
       } else {
         twiml.message(
           `Sorry, I don't understand. Are you sure that's a valid code?`
@@ -284,15 +314,14 @@ app.post("/sms", (req, res) => {
       }
     } else if (msg[0] === "G") {
       // The person is trying to confirm the completion of the garbage chore
-      let temp = oustandingGarbageChore.has(sender)
-        ? outstandingGarbageChore.get(sender)
-        : ""
+      let temp =
+        outstandingGarbageChore.length === 1 ? outstandingGarbageChore[0] : []
 
-      if (temp === msg) {
+      if (temp[1] === msg) {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
         )
-        outStandingGarbageChore.delete(sender)
+        outStandingGarbageChore.pop()
       } else {
         twiml.message(
           `Sorry, I don't understand. Are you sure that's a valid code?`
@@ -300,33 +329,45 @@ app.post("/sms", (req, res) => {
       }
     } else {
       // The person is trying to confirm the repayment of some debt
-      let temp = outstandingDebt.has(sender) ? oustandingDebt.get(sender) : []
-      // [lender, code, amount]
-      if (temp.length > 0) {
-        let lender, amount, loc
-        let i = 0
-        while (i < temp.length) {
-          if (temp[i][1] === msg) {
-            lender = temp[i][0]
-            amount = temp[i][2]
-            loc = i
-            i = temp.length
-          } else {
-            i++
-          }
+      let temp = []
+
+      let j = 0,
+        loc = 0
+      while (j < outstandingDebt) {
+        let x = outstandingDebt[j]
+
+        if (x[2] === msg) {
+          temp = x
+          outstandingDebt.splice(j, 1)
+          j = outstandingDebt.length
+        } else {
+          j++
         }
+      }
 
-        outstandingDebt.splice(loc, 1)
-        twiml.message(
-          `Hi ${sender}! I have confirmation that you paid the debt-collector $${amount} on behalf of his client, ${lender}. Thank you!`
-        )
+      // [lender, borrower, code, amount]
+      if (temp.length > 0) {
+        let lender, amount
 
-        // Text the lender telling them that the debt has been repaid
-        client.messages.create({
-          body: `Hi ${lender}! I just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you!`,
-          to: theBoys[theBoys.indexOf(lender)],
-          from: TWILIO_PHONE_NUMBER,
-        })
+        lender = temp[0]
+        amount = temp[3]
+
+        if (msg === temp[2]) {
+          twiml.message(
+            `Hi ${sender}! I have just received confirmation that you paid the debt-collector $${amount} on behalf of his client, ${lender}. Thank you!`
+          )
+
+          // Text the lender telling them that the debt has been repaid
+          client.messages.create({
+            body: `Hi ${lender}! I have just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you!`,
+            to: numbers[theBoys.indexOf(lender)],
+            from: TWILIO_PHONE_NUMBER,
+          })
+        } else {
+          twiml.message(
+            `Sorry I don't understand. Are you sure that's a valid code?`
+          )
+        }
       } else {
         twiml.message(
           `Sorry I don't understand. Are you sure that's a valid code?`
@@ -341,17 +382,4 @@ app.post("/sms", (req, res) => {
 
   res.writeHead(200, { "Content-Type": "text/xml" })
   res.end(twiml.toString())
-})
-
-app.get("/see-state", (req, res) => {
-  let state = {
-    garbageWeek,
-    iter,
-    towel,
-    oustandingDebt,
-    outstandingGarbageChore,
-    outstandingTowelChore,
-  }
-
-  res.send(state)
 })
