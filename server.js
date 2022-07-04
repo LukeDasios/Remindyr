@@ -1,11 +1,11 @@
-// require("dotenv").config()
+require("dotenv").config()
 const app = require("express")()
 const bodyParser = require("body-parser")
 
-// const PORT = process.env.PORT || 3000
-// const ACCOUNT_SID = process.env.ACCOUNT_SID
-// const AUTH_TOKEN = process.env.AUTH_TOKEN
-// const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
+const PORT = process.env.PORT || 3000
+const ACCOUNT_SID = process.env.ACCOUNT_SID
+const AUTH_TOKEN = process.env.AUTH_TOKEN
+const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 
 const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN)
 const MessagingResponse = require("twilio").twiml.MessagingResponse
