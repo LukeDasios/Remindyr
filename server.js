@@ -120,7 +120,7 @@ app.get("/see-state", (req, res) => {
     garbageWeek,
     iter,
     towel,
-    oustandingDebt,
+    outstandingDebt,
     outstandingGarbageChore,
     outstandingTowelChore,
   }
