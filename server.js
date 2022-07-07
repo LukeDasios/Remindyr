@@ -187,8 +187,6 @@ app.get("/once_per_selected_days", (req, res) => {
     })
 
     outstandingGarbageChore.push(theBoys[iter], garbageCode)
-
-    garbageWeek = !garbageWeek
   } else if (day === 4) {
     // Towel day
     let towelCode = generateTowelChoreCode()
@@ -201,7 +199,6 @@ app.get("/once_per_selected_days", (req, res) => {
 
     outstandingTowelChore.push(theBoys[iter], towelCode)
 
-    towel = towel === 3 ? 0 : towel + 1
   } else if (day === 6) {
     //Saturday
     client.messages.create({
@@ -309,6 +306,7 @@ app.post("/sms", (req, res) => {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
         )
+        towel = towel === 3 ? 0 : towel + 1
         outstandingTowelChore.pop()
       } else {
         twiml.message(
@@ -324,6 +322,7 @@ app.post("/sms", (req, res) => {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
         )
+        garbageWeek = !garbageWeek
         outStandingGarbageChore.pop()
       } else {
         twiml.message(
@@ -334,8 +333,7 @@ app.post("/sms", (req, res) => {
       // The person is trying to confirm the repayment of some debt
       let temp = []
 
-      let j = 0,
-        loc = 0
+      let j = 0
       while (j < outstandingDebt) {
         let x = outstandingDebt[j]
 
