@@ -10,7 +10,7 @@ const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN)
 const MessagingResponse = require("twilio").twiml.MessagingResponse
 
-let garbageWeek = false
+let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
 let iter = 2
@@ -132,7 +132,7 @@ app.get("/once_per_hour", (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
 
-  let date = Date.now()
+  let date = new Date()
   let day = date.getDay()
 
   if (day === 2) {
@@ -167,11 +167,11 @@ app.get("/once_per_day", (req, res) => {
     })
   }
 
-  res.send("Sent today's debt-collection reminders")
+  res.send("Sent today's debt-collection reminders!")
 })
 
 app.get("/once_per_selected_days", (req, res) => {
-  let date = Date.now()
+  let date = new Date()
   let day = date.getDay()
 
   if (day === 2) {
@@ -186,7 +186,7 @@ app.get("/once_per_selected_days", (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     })
 
-    garbage = !garbage
+    garbageWeek = !garbageWeek
   } else if (day === 4) {
     // Towel day
     let towelCode = generateTowelChoreCode()
@@ -218,6 +218,8 @@ app.get("/once_per_selected_days", (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     })
   }
+
+  res.send("Sent today's important chore reminders!")
 })
 
 app.get("/once_per_month", (req, res) => {
@@ -240,12 +242,7 @@ app.post("/sms", (req, res) => {
 
   if (msg.includes("commands")) {
     twiml.message(`
-    Commands:
-
-    commands -> learn about all the ways I'm here to help
-    origin -> learn about why I exist
-    debt-collector -> learn about how to hire a debt-collector
-    `)
+    Commands:\ncommands -> learn about all the ways I'm here to help\norigin -> learn about why I exist\ndebt-collector -> learn about how to hire a debt-collector`)
   } else if (msg.includes("origin")) {
     twiml.message(`
     You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
