@@ -139,15 +139,15 @@ app.get("/once_per_hour", (req, res) => {
     // Garbage Day
     client.messages.create({
       body: garbageWeek
-        ? `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[0][1]} when the job is done. Cheers.`
-        : `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[0][1]} when the job is done. Cheers.`,
+        ? `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[1]} when the job is done. Cheers.`
+        : `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[1]} when the job is done. Cheers.`,
       to: numbers[iter],
       from: TWILIO_PHONE_NUMBER,
     })
   } else {
     // Towel Day
     client.messages.create({
-      body: `Hi ${theBoys[towel]}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${outstandingTowelChore[0][1]} when the job is done. Cheers.`,
+      body: `Hi ${theBoys[towel]}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${outstandingTowelChore[1]} when the job is done. Cheers.`,
       to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
     })
