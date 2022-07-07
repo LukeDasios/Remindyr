@@ -186,6 +186,8 @@ app.get("/once_per_selected_days", (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     })
 
+    outstandingGarbageChore.push(theBoys[iter], garbageCode)
+
     garbageWeek = !garbageWeek
   } else if (day === 4) {
     // Towel day
@@ -196,6 +198,8 @@ app.get("/once_per_selected_days", (req, res) => {
       to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
     })
+
+    outstandingTowelChore.push(theBoys[iter], towelCode)
 
     towel = towel === 3 ? 0 : towel + 1
   } else if (day === 6) {
