@@ -226,11 +226,13 @@ app.get("/once_per_month", (req, res) => {
   // Rent reminder
   for (let i = 0; i < theBoys.length; i++) {
     client.messages.create({
-      body: `Good Evening ${theBoys[i]}! Heads up, $625 in rent is due today.`,
+      body: `Hello ${theBoys[i]}! Heads up, $625 in rent is due today.`,
       to: numbers[i],
       from: TWILIO_PHONE_NUMBER,
     })
   }
+
+  res.send("Sent today's rent reminders!")
 })
 
 app.post("/sms", (req, res) => {
