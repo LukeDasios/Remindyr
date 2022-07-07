@@ -299,10 +299,9 @@ app.post("/sms", (req, res) => {
   } else if (msg.length === 4) {
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
-      let temp =
-        outstandingTowelChore.length === 1 ? outstandingTowelChore[0] : []
+      let temp = outstandingTowelChore[1] === msg ? outstandingTowelChore[1] : ""
 
-      if (temp[1] === msg) {
+      if (temp === msg) {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
         )
@@ -315,10 +314,10 @@ app.post("/sms", (req, res) => {
       }
     } else if (msg[0] === "G") {
       // The person is trying to confirm the completion of the garbage chore
-      let temp =
-        outstandingGarbageChore.length === 1 ? outstandingGarbageChore[0] : []
 
-      if (temp[1] === msg) {
+      let temp = outstandingGarbageChore[1] === msg ? outstandingGarbageChore[1] : ""
+
+      if (temp === msg) {
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
         )
