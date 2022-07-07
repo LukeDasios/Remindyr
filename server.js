@@ -197,7 +197,7 @@ app.get("/once_per_selected_days", (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     })
 
-    outstandingTowelChore.push(theBoys[iter], towelCode)
+    outstandingTowelChore.push(theBoys[towel], towelCode)
 
   } else if (day === 6) {
     //Saturday
