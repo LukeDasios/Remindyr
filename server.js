@@ -82,7 +82,7 @@ function generateGarbageChoreCode() {
   let code = "G"
 
   for (let i = 0; i < 3; i++) {
-    code += (Math.random() * 10).toString()
+    code += Math.floor((Math.random() * 10)).toString()
   }
 
   return code
@@ -92,7 +92,7 @@ function generateTowelChoreCode() {
   let code = "T"
 
   for (let i = 0; i < 3; i++) {
-    code += (Math.random() * 10).toString()
+    code += Math.floor((Math.random() * 10)).toString()
   }
 
   return code
@@ -102,7 +102,7 @@ function generateDebtCollectionCode() {
   let code = "C"
 
   for (let i = 0; i < 3; i++) {
-    code += (Math.random() * 10).toString()
+    code += Math.floor((Math.random() * 10)).toString()
   }
 
   return code
