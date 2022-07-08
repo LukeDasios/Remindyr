@@ -136,7 +136,7 @@ app.get("/once_per_hour", (req, res) => {
   let date = new Date()
   let day = date.getDay()
 
-  if (day === 2) {
+  if (day === 2 && outstandingGarbageChore.length === 2) {
     // Garbage Day
     client.messages.create({
       body: garbageWeek
@@ -145,13 +145,15 @@ app.get("/once_per_hour", (req, res) => {
       to: numbers[iter],
       from: TWILIO_PHONE_NUMBER,
     })
-  } else {
+  } else if (day === 4 && outstandingTowelChore.length === 2) {
     // Towel Day
     client.messages.create({
       body: `Hi ${theBoys[towel]}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${outstandingTowelChore[1]} when the job is done. Cheers.`,
       to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
     })
+  } else {
+    // Don't send any messages
   }
 
   res.send("Sent an hourly important chore reminder!")
