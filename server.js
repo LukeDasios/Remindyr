@@ -302,7 +302,7 @@ app.post("/sms", (req, res) => {
       let temp = outstandingTowelChore[1] === msg ? msg : ""
 
       client.messages.send({
-        body: temp,
+        body: "TEST" + temp,
         to: numbers[towel],
         from: TWILIO_PHONE_NUMBER,
       })
@@ -315,7 +315,7 @@ app.post("/sms", (req, res) => {
         outstandingTowelChore.pop()
       } else {
         twiml.message(
-          `Sorry, I don't understand. Are you sure that's a valid code?`
+          `Sorry, I don't understand. Are you sure that's a valid code? HHH`
         )
       }
     } else if (msg[0] === "G") {
