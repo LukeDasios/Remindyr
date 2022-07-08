@@ -299,12 +299,7 @@ app.post("/sms", (req, res) => {
     }
   } else if (msg.length === 4) {
     msg = msg.toUpperCase()
-    client.messages.create({
-      body: `typeof: ${typeof msg} and the message itself: ${msg}`,
-      to: numbers[towel],
-      from: TWILIO_PHONE_NUMBER,
-    })
-    if (msg[0] === "t") {
+    if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
       let temp = outstandingTowelChore[1] === msg ? msg : ""
 
@@ -319,7 +314,7 @@ app.post("/sms", (req, res) => {
           `Sorry, I don't understand. Are you sure that's a valid code?`
         )
       }
-    } else if (msg[0] === "g") {
+    } else if (msg[0] === "G") {
       // The person is trying to confirm the completion of the garbage chore
       let temp = outstandingGarbageChore[1] === msg ? msg : ""
 
