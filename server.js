@@ -174,7 +174,7 @@ app.get("/once_per_day", (req, res) => {
 app.get("/once_per_selected_days", (req, res) => {
   // let date = new Date()
   // let day = date.getDay()
-  let day = 4
+  let day = 2
 
   if (day === 2) {
     // Garbage day
@@ -184,7 +184,7 @@ app.get("/once_per_selected_days", (req, res) => {
       body: garbageWeek
         ? `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is done. Cheers.`
         : `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is done. Cheers.`,
-      to: numbers[iter],
+      to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
     })
 
