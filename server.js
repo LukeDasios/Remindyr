@@ -14,7 +14,7 @@ const MessagingResponse = require("twilio").twiml.MessagingResponse
 let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
-let iter = 0
+let iter = 2
 let towel = 0
 
 // [Chore-Assignee, Code]
@@ -172,9 +172,8 @@ app.get("/once_per_day", (req, res) => {
 })
 
 app.get("/once_per_selected_days", (req, res) => {
-  // let date = new Date()
-  // let day = date.getDay()
-  let day = 2
+  let date = new Date()
+  let day = date.getDay()
 
   if (day === 2) {
     // Garbage day
