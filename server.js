@@ -300,7 +300,7 @@ app.post("/sms", (req, res) => {
   } else if (msg.length === 4) {
     msg = msg.toUpperCase()
     client.messages.create({
-      body: msg,
+      body: `typeof: ${typeof msg} and the message itself: ${msg}`,
       to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
     })
