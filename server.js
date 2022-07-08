@@ -301,13 +301,7 @@ app.post("/sms", (req, res) => {
       )
     }
   } else if (msg.length === 4) {
-    client.messages.create({
-      body: msg,
-      to: numbers[towel],
-      from: TWILIO_PHONE_NUMBER,
-    })
-
-    if (msg[0] === "T") {
+    if (msg[0] === "t") {
       // The person is trying to confirm the completion of the towel chore
       let temp = outstandingTowelChore[1] === msg ? msg : ""
 
@@ -319,10 +313,10 @@ app.post("/sms", (req, res) => {
         outstandingTowelChore.pop()
       } else {
         twiml.message(
-          `Sorry, I don't understand. Are you sure that's a valid code? HHH`
+          `Sorry, I don't understand. Are you sure that's a valid code?`
         )
       }
-    } else if (msg[0] === "G") {
+    } else if (msg[0] === "g") {
       // The person is trying to confirm the completion of the garbage chore
       let temp = outstandingGarbageChore[1] === msg ? msg : ""
 
@@ -334,7 +328,7 @@ app.post("/sms", (req, res) => {
         outStandingGarbageChore.pop()
       } else {
         twiml.message(
-          `Sorry, I don't understand. Are you sure that's a valid code? GGG`
+          `Sorry, I don't understand. Are you sure that's a valid code?`
         )
       }
     } else {
@@ -374,12 +368,12 @@ app.post("/sms", (req, res) => {
           })
         } else {
           twiml.message(
-            `Sorry I don't understand. Are you sure that's a valid code? LLL`
+            `Sorry I don't understand. Are you sure that's a valid code?`
           )
         }
       } else {
         twiml.message(
-          `Sorry I don't understand. Are you sure that's a valid code? DSD`
+          `Sorry I don't understand. Are you sure that's a valid code?`
         )
       }
     }
