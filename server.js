@@ -301,7 +301,7 @@ app.post("/sms", (req, res) => {
       )
     }
   } else if (msg.length === 4) {
-    client.messages.send({
+    client.messages.create({
       body: msg,
       to: numbers[towel],
       from: TWILIO_PHONE_NUMBER,
