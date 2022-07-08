@@ -299,6 +299,13 @@ app.post("/sms", (req, res) => {
     }
   } else if (msg.length === 4) {
     msg = msg.toUpperCase()
+    client.messages.create({
+      body: `msg: ${msg}, outstandingTowelChore[1]: ${
+        outstandingTowelChore[1]
+      }, boolean: ${msg === outstandingTowelChore[1]}`,
+      to: numbers[towel],
+      from: TWILIO_PHONE_NUMBER,
+    })
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
       let temp = outstandingTowelChore[1] === msg ? msg : ""
