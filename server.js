@@ -301,15 +301,15 @@ app.post("/sms", (req, res) => {
       )
     }
   } else if (msg.length === 4) {
+    client.messages.send({
+      body: msg,
+      to: numbers[towel],
+      from: TWILIO_PHONE_NUMBER,
+    })
+
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
       let temp = outstandingTowelChore[1] === msg ? msg : ""
-
-      client.messages.send({
-        body: "TEST" + temp,
-        to: numbers[towel],
-        from: TWILIO_PHONE_NUMBER,
-      })
 
       if (temp === msg) {
         twiml.message(
