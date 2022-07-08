@@ -16,6 +16,8 @@ const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
 let iter = 2
 let towel = 0
 
+let len = 0
+
 // [Chore-Assignee, Code]
 let outstandingTowelChore = []
 
@@ -123,6 +125,7 @@ app.get("/see-state", (req, res) => {
     outstandingDebt,
     outstandingGarbageChore,
     outstandingTowelChore,
+    len,
   }
 
   res.send(state)
@@ -191,6 +194,7 @@ app.get("/once_per_selected_days", (req, res) => {
   } else if (day === 4) {
     // Towel day
     let towelCode = generateTowelChoreCode()
+    len = towelCode.length
 
     client.messages.create({
       body: `Good Afternoon ${theBoys[towel]}! It's your turn on towel duty! They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${towelCode} when the job is done. Cheers.`,
