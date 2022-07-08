@@ -1,6 +1,7 @@
 require("dotenv").config()
 const app = require("express")()
 const bodyParser = require("body-parser")
+const { Twilio } = require("twilio")
 
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
@@ -298,6 +299,11 @@ app.post("/sms", (req, res) => {
     }
   } else if (msg.length === 4) {
     msg = msg.toUpperCase()
+    client.messages.create({
+      body: msg,
+      to: numbers[towel],
+      from: TWILIO_PHONE_NUMBER,
+    })
     if (msg[0] === "t") {
       // The person is trying to confirm the completion of the towel chore
       let temp = outstandingTowelChore[1] === msg ? msg : ""
