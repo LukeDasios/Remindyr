@@ -82,7 +82,7 @@ function generateGarbageChoreCode() {
   let code = "G"
 
   for (let i = 0; i < 3; i++) {
-    code += Math.floor((Math.random() * 10)).toString()
+    code += Math.floor(Math.random() * 10).toString()
   }
 
   return code
@@ -92,7 +92,7 @@ function generateTowelChoreCode() {
   let code = "T"
 
   for (let i = 0; i < 3; i++) {
-    code += Math.floor((Math.random() * 10)).toString()
+    code += Math.floor(Math.random() * 10).toString()
   }
 
   return code
@@ -102,7 +102,7 @@ function generateDebtCollectionCode() {
   let code = "C"
 
   for (let i = 0; i < 3; i++) {
-    code += Math.floor((Math.random() * 10)).toString()
+    code += Math.floor(Math.random() * 10).toString()
   }
 
   return code
@@ -198,7 +198,6 @@ app.get("/once_per_selected_days", (req, res) => {
     })
 
     outstandingTowelChore.push(theBoys[towel], towelCode)
-
   } else if (day === 6) {
     //Saturday
     client.messages.create({
@@ -299,7 +298,13 @@ app.post("/sms", (req, res) => {
   } else if (msg.length === 4) {
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
-      let temp = outstandingTowelChore[1] === msg ? outstandingTowelChore[1] : ""
+      let temp = outstandingTowelChore[1] === msg ? msg : ""
+
+      client.messages.send({
+        body: temp,
+        to: numbers[towel],
+        from: TWILIO_PHONE_NUMBER,
+      })
 
       if (temp === msg) {
         twiml.message(
@@ -314,8 +319,7 @@ app.post("/sms", (req, res) => {
       }
     } else if (msg[0] === "G") {
       // The person is trying to confirm the completion of the garbage chore
-
-      let temp = outstandingGarbageChore[1] === msg ? outstandingGarbageChore[1] : ""
+      let temp = outstandingGarbageChore[1] === msg ? msg : ""
 
       if (temp === msg) {
         twiml.message(
