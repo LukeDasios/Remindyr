@@ -14,7 +14,7 @@ const MessagingResponse = require("twilio").twiml.MessagingResponse
 let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
-let iter = 2
+let iter = 0
 let towel = 0
 
 // [Chore-Assignee, Code]
@@ -184,7 +184,7 @@ app.get("/once_per_selected_days", (req, res) => {
       body: garbageWeek
         ? `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is done. Cheers.`
         : `Good Evening ${theBoys[iter]}! In case you haven't already done so already, the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${garbageCode} when the job is done. Cheers.`,
-      to: numbers[towel],
+      to: numbers[iter],
       from: TWILIO_PHONE_NUMBER,
     })
 
