@@ -245,7 +245,7 @@ app.post("/sms", (req, res) => {
 
   if (msg.includes("commands")) {
     twiml.message(`
-    Commands:\ncommands -> learn about all the ways I'm here to help\norigin -> learn about why I exist\ndebt-collector -> learn about how to hire a debt-collector`)
+    Commands:\ncommands -> learn about all the ways I'm here to help\n\norigin -> learn about why I exist\n\ndebt-collector -> learn about how to hire a debt-collector`)
   } else if (msg.includes("origin")) {
     twiml.message(`
     You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
