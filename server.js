@@ -334,7 +334,7 @@ app.post("/sms", (req, res) => {
         outStandingGarbageChore.pop()
       } else {
         twiml.message(
-          `Sorry, I don't understand. Are you sure that's a valid code?`
+          `Sorry, I don't understand. Are you sure that's a valid code? GGG`
         )
       }
     } else {
@@ -374,12 +374,12 @@ app.post("/sms", (req, res) => {
           })
         } else {
           twiml.message(
-            `Sorry I don't understand. Are you sure that's a valid code?`
+            `Sorry I don't understand. Are you sure that's a valid code? LLL`
           )
         }
       } else {
         twiml.message(
-          `Sorry I don't understand. Are you sure that's a valid code?`
+          `Sorry I don't understand. Are you sure that's a valid code? DSD`
         )
       }
     }
