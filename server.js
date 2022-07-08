@@ -286,7 +286,7 @@ app.post("/sms", (req, res) => {
         //Sends an initial message to each borrower
         client.messages.create({
           body: `Hi ${names[i]}! I'm a debt-collector. It has come to my attention that you owe my client ${sender} an amount totalling $${amount}. Please E-transfer him when you get a chance and reply with code ${code} when you have.`,
-          to: numbers[theBoys.indexOf(names[i])],
+          to: numbers[i],
           from: TWILIO_PHONE_NUMBER,
         })
 
