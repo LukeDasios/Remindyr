@@ -309,6 +309,7 @@ app.post("/sms", (req, res) => {
         )
         towel = towel === 3 ? 0 : towel + 1
         outstandingTowelChore.pop()
+        outstandingTowelChore.pop()
       } else {
         twiml.message(
           `Sorry, I don't understand. Are you sure that's a valid code?`
@@ -323,6 +324,7 @@ app.post("/sms", (req, res) => {
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
         )
         garbageWeek = !garbageWeek
+        outStandingGarbageChore.pop()
         outStandingGarbageChore.pop()
       } else {
         twiml.message(
