@@ -324,8 +324,8 @@ app.post("/sms", (req, res) => {
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
         )
         garbageWeek = !garbageWeek
-        outStandingGarbageChore.pop()
-        outStandingGarbageChore.pop()
+        outstandingGarbageChore.pop()
+        outstandingGarbageChore.pop()
       } else {
         twiml.message(
           `Sorry, I don't understand. Are you sure that's a valid code?`
