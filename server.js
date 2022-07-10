@@ -308,7 +308,7 @@ app.post("/sms", (req, res) => {
 
         client.messages.create({
           body: `E-transfer ${sender} $${amount} for the ${reason} and text me ${code} once you have.`,
-          to: numbers[names.indexOf(name)],
+          to: numbers[theBoys.indexOf(name)],
           from: TWILIO_PHONE_NUMBER,
         })
 
