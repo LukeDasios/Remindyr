@@ -1,7 +1,6 @@
 require("dotenv").config()
 const app = require("express")()
 const bodyParser = require("body-parser")
-const { Twilio } = require("twilio")
 
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
@@ -14,8 +13,8 @@ const MessagingResponse = require("twilio").twiml.MessagingResponse
 let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
-let iter = 2
-let towel = 0
+let iter = 3
+let towel = 1
 
 // [Chore-Assignee, Code]
 let outstandingTowelChore = []
@@ -23,7 +22,7 @@ let outstandingTowelChore = []
 // [Chore-Assignee, Code]
 let outstandingGarbageChore = []
 
-// [Lender, Borrower, Code, Amount]
+// [Lender, Borrower, Code, Amount, Days]
 let outstandingDebt = []
 
 function whoIsNext(num) {
@@ -31,51 +30,76 @@ function whoIsNext(num) {
 }
 
 function validDebtCollectorUsage(msg) {
-  msg = msg.trim().slice(15)
+  msg = msg.trim().slice(7)
+  if (msg[0] !== " ") return false
+  msg = msg.slice(1)
 
+  let nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
   let i = 0
+  let tot = 0
   let names = []
   let amount = ""
   let temp = ""
-  let flag = true
+  let count = 0
 
-  while (i < msg.length) {
-    let char = msg[i]
-    if (char === "|") {
-      names.push(temp)
-      for (let j = i + 2; j < msg.length; j++) {
-        amount += msg[j]
+  if (msg[0] !== "0" && nums.includes(msg[0])) {
+    while (i < msg.length) {
+      let char = msg[i]
+
+      if (char === " ") {
+        msg = msg.slice(i + 1)
+        i = msg.length
+      } else if (nums.includes(char)) {
+        amount += char
+      } else if (char === "." && count === 0) {
+        amount += char
+        count++
+      } else {
+        return false
       }
-      i = msg.length
-    } else if (char === ",") {
+      i++
+    }
+  } else {
+    return false
+  }
+
+  if (msg.slice(0, 4) !== "from") return false
+  msg = msg.slice(4)
+  if (msg.slice(0, 1) !== " ") return false
+  msg = msg.slice(1)
+
+  let last = msg.indexOf("for")
+
+  i = 0
+  while (i !== last) {
+    let char = msg[i]
+
+    if (char === ",") {
       names.push(temp)
       temp = ""
+    } else if (char === " ") {
     } else {
-      if (char !== " ") temp += char
+      temp += char
     }
     i++
   }
 
-  amount = parseFloat((parseFloat(amount) / names.length).toFixed(2))
+  names.push(temp)
 
-  for (i = 0; i < names.length; i++) {
-    if (!theBoys.includes(names[i])) flag = false
-  }
+  if (!names.every((name) => theBoys.includes(name))) return false
 
-  if (amount < 0) flag = false
+  amount = parseFloat(parseFloat(amount).toFixed(2) / names.length)
 
-  if (flag) {
-    return {
-      bool: true,
-      names: [...names],
-      amount: amount,
-    }
-  } else {
-    return {
-      bool: false,
-      names: null,
-      amount: null,
-    }
+  msg = msg.slice(last)
+  if (msg.slice(0, 3) !== "for") return false
+  msg = msg.slice(3)
+  if (msg[0] !== " ") return false
+  msg = msg.slice(1)
+
+  return {
+    amount,
+    names,
+    reason: msg,
   }
 }
 
@@ -162,12 +186,24 @@ app.get("/once_per_hour", (req, res) => {
 app.get("/once_per_day", (req, res) => {
   // Message everyone with an outstanding debt
   for (let i = 0; i < outstandingDebt.length; i++) {
+    // [Lender, Borrower, Code, Amount, Reason, Days]
     let temp = outstandingDebt[i]
+
+    let lender = temp[0]
+    let borrower = temp[1]
+    let code = temp[2]
+    let amount = temp[3]
+    let reason = temp[4]
+    let days = temp[5]
+
     client.messages.create({
-      body: `Hi ${temp[1]}! I'm a debt-collector. It has come to my attention that you owe my client ${temp[0]} an amount totalling $${temp[3]}. Please E-transfer him when you get a chance and reply with code ${temp[2]} when you have.`,
-      to: numbers[theBoys.indexOf(temp[1])],
+      body: `Hi ${borrower}! Please E-transfer ${lender} $${amount} for ${reason} and text me code ${code} when you do. This debt has been outstanding for ${days} day(s)`,
+      to: numbers[theBoys.indexOf(borrower)],
       from: TWILIO_PHONE_NUMBER,
     })
+
+    // Days that the outstanding debt has been pending += 1
+    temp[5]++
   }
 
   res.send("Sent today's debt-collection reminders!")
@@ -240,65 +276,69 @@ app.get("/once_per_month", (req, res) => {
 
 app.post("/sms", (req, res) => {
   // console.log(req.body)
-  let msg = req.body.Body.trim().toLowerCase()
+  let originalMsg = req.body.Body.trim()
+  let msg = originalMsg.toLowerCase()
   let senderNumber = req.body.From
   let sender = theBoys[numbers.indexOf(senderNumber)]
   const twiml = new MessagingResponse()
 
   if (msg.includes("commands")) {
     twiml.message(`
-    Commands:\ncommands -> learn about all the ways I'm here to help\n\norigin -> learn about why I exist\n\ndebt-collector -> learn about how to hire a debt-collector`)
+    Commands:\ncommands -> what I do\n\norigin -> why I exist\n\nDC -> collect $ from your roomates`)
   } else if (msg.includes("origin")) {
     twiml.message(`
     You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
     `)
-  } else if (msg.includes("debt-collector")) {
-    let obj = validDebtCollectorUsage(msg)
-    let bool = obj.bool
-    let names = obj.names
-    let amount = obj.amount
-
-    console.log(obj)
-
-    if (msg.length === 14) {
-      twiml.message(`
-      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that for you by hiring your very own personal debt-collector who will remind the borrower(s) once a day of their debt until you get your $ back.\nSyntax:\n\n<NAMES(S)> | <AMOUNT>\n\nUsage:\n\nUse Case #1: You want to collect $ from an individual\nExample #1: Sam owes you $5\nTo hire a personal debt-collector to collect your $5 from Sam, you would text me:\n\ndebt-collector Sam 5\n\nUse Case #2: You want to collect money from a number of individuals, and have them split the amount\nExample #2 Justin and Duncan owe you $10 ($5 each)\nTo hire a personal debt-collector to collect your $10 from Justin and Duncan, you would text me:\n\ndebt-collector Justin, Duncan | 10
+  } else if (msg.includes("dc")) {
+    twiml.message(`
+      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza\ncollect 10 from Justin, Duncan for pizza
     `)
-    } else if (bool) {
-      let str = ""
+  } else if (msg.includes("collect")) {
+    let obj = validDebtCollectorUsage(originalMsg)
+    if (obj) {
+      amount = obj.amount
+      names = obj.names
+      reason = obj.reason
+
+      let code = generateDebtCollectionCode()
+
+      // Text all the borrowers
+      for (let i = 0; i < names.length; i++) {
+        let name = names[i]
+
+        client.messages.create({
+          body: `E-transfer ${sender} $${amount} for the ${reason} and text me ${code} once you have.`,
+          to: numbers[names.indexOf(name)],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        // [Lender, Borrower, Code, Amount, Reason, Days]
+        outstandingDebt.push([sender, name, code, amount, reason, 1])
+      }
+
+      let namesListed = ""
       if (names.length === 1) {
-        str = names[0]
+        namesListed += names[i]
       } else {
         for (let i = 0; i < names.length; i++) {
-          if (i !== names.length - 1) {
-            str += `${names[i]}, `
+          let name = names[i]
+
+          if (i === names.length - 1) {
+            namesListed += `and ${name}`
           } else {
-            str += `and ${names[i]}`
+            namesListed += `${name}, `
           }
         }
       }
 
-      // Sends a confirmation message to the lender
-      twiml.message(
-        `Hi ${sender}! I've hired and deployed your very own personal debt-collector to collect the $${amount} you are owed from ${str}. I will notify you when the job is done!`
-      )
-
-      let code = generateDebtCollectionCode()
-
-      for (let i = 0; i < names.length; i++) {
-        //Sends an initial message to each borrower
-        client.messages.create({
-          body: `Hi ${names[i]}! I'm a debt-collector. It has come to my attention that you owe my client ${sender} an amount totalling $${amount}. Please E-transfer him when you get a chance and reply with code ${code} when you have.`,
-          to: numbers[i],
-          from: TWILIO_PHONE_NUMBER,
-        })
-
-        outstandingDebt.push([sender, names[i], code, amount])
-      }
+      // Send a confirmation text to the lender
+      twiml.message(`
+        Succesfully deployed your debt-collector on ${namesListed} for ${reason}! I'll let you know when the debt has been paid.
+      `)
     } else {
-      twiml.message(
-        `Sorry, I don't understand. Text me "debt-collector" to learn about how to properly use the debt collector service.`
-      )
+      twiml.message(`
+        Text me "DC" to learn about how to properly use the debt collector service
+      `)
     }
   } else if (msg.length === 4) {
     msg = msg.toUpperCase()
