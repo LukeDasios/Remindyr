@@ -22,7 +22,7 @@ let outstandingTowelChore = []
 // [Chore-Assignee, Code]
 let outstandingGarbageChore = []
 
-// [Lender, Borrower, Code, Amount, Days]
+// [Lender, Borrower, Code, Amount, Reason, Days]
 let outstandingDebt = []
 
 function whoIsNext(num) {
@@ -106,7 +106,7 @@ function validDebtCollectorUsage(msg) {
 function generateGarbageChoreCode() {
   let code = "G"
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     code += Math.floor(Math.random() * 10).toString()
   }
 
@@ -116,7 +116,7 @@ function generateGarbageChoreCode() {
 function generateTowelChoreCode() {
   let code = "T"
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     code += Math.floor(Math.random() * 10).toString()
   }
 
@@ -124,9 +124,9 @@ function generateTowelChoreCode() {
 }
 
 function generateDebtCollectionCode() {
-  let code = "C"
+  let code = "D"
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     code += Math.floor(Math.random() * 10).toString()
   }
 
@@ -342,7 +342,7 @@ app.post("/sms", (req, res) => {
         Text me "DC" to learn about how to properly use the debt collector service
       `)
     }
-  } else if (msg.length === 4) {
+  } else if (msg.length === 5) {
     msg = msg.toUpperCase()
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
@@ -376,16 +376,17 @@ app.post("/sms", (req, res) => {
           `Sorry, I don't understand. Are you sure that's a valid code?`
         )
       }
-    } else {
+    } else if (msg[0] === "D") {
       // The person is trying to confirm the repayment of some debt
-      let temp = []
+      let debt = []
 
       let j = 0
-      while (j < outstandingDebt) {
-        let x = outstandingDebt[j]
+      while (j < outstandingDebt.length) {
+        // [Lender, Borrower, Code, Amount, Reason, Days]
+        let temp = outstandingDebt[j]
 
-        if (x[2] === msg) {
-          temp = x
+        if (temp[2] === msg) {
+          debt = [...temp]
           outstandingDebt.splice(j, 1)
           j = outstandingDebt.length
         } else {
@@ -393,34 +394,34 @@ app.post("/sms", (req, res) => {
         }
       }
 
-      // [lender, borrower, code, amount]
-      if (temp.length > 0) {
-        let lender, amount
+      // [Lender, Borrower, Code, Amount, Reason, Days]
+      if (debt.length > 0) {
+        let lender = debt[0]
+        let borrower = debt[1]
+        let code = debt[2]
+        let amount = debt[3]
+        let reason = debt[4]
+        let days = debt[5]
 
-        lender = temp[0]
-        amount = temp[3]
+        twiml.message(
+          `Hi ${borrower}! Thanks for confirming the E-transfer of $${amount} to ${lender} for ${reason}!`
+        )
 
-        if (msg === temp[2]) {
-          twiml.message(
-            `Hi ${sender}! I have just received confirmation that you paid the debt-collector $${amount} on behalf of his client, ${lender}. Thank you!`
-          )
-
-          // Text the lender telling them that the debt has been repaid
-          client.messages.create({
-            body: `Hi ${lender}! I have just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you!`,
-            to: numbers[theBoys.indexOf(lender)],
-            from: TWILIO_PHONE_NUMBER,
-          })
-        } else {
-          twiml.message(
-            `Sorry I don't understand. Are you sure that's a valid code?`
-          )
-        }
+        // Text the lender telling them that the debt has been repaid
+        client.messages.create({
+          body: `Hi ${lender}! I have just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you for ${reason}!`,
+          to: numbers[theBoys.indexOf(lender)],
+          from: TWILIO_PHONE_NUMBER,
+        })
       } else {
         twiml.message(
           `Sorry I don't understand. Are you sure that's a valid code?`
         )
       }
+    } else {
+      twiml.message(
+        `Sorry I don't understand. Are you sure that's a valid code?`
+      )
     }
   } else {
     twiml.message(
