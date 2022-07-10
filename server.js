@@ -318,7 +318,7 @@ app.post("/sms", (req, res) => {
 
       let namesListed = ""
       if (names.length === 1) {
-        namesListed += names[i]
+        namesListed += names[0]
       } else {
         for (let i = 0; i < names.length; i++) {
           let name = names[i]
