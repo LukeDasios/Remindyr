@@ -284,10 +284,10 @@ app.post("/sms", (req, res) => {
 
   if (msg.includes("commands")) {
     twiml.message(`
-    Commands:\ncommands -> what I do\n\norigin -> why I exist\n\nDC -> collect $ from your roomates`)
+    Commands:\n\ncommands -> what I do\n\norigin -> why I exist\n\nDC -> collect $ from your roomates`)
   } else if (msg.includes("origin")) {
     twiml.message(`
-    You lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
+    \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
     `)
   } else if (msg.includes("dc")) {
     twiml.message(`
@@ -331,9 +331,11 @@ app.post("/sms", (req, res) => {
         }
       }
 
+      amount *= names.length
+
       // Send a confirmation text to the lender
       twiml.message(`
-        Succesfully deployed your debt-collector on ${namesListed} for ${reason}! I'll let you know when the debt has been paid.
+        Succesfully deployed your debt-collector on ${namesListed} for ${reason} totalling $${amount}! I'll let you once I've collected this for you.
       `)
     } else {
       twiml.message(`
