@@ -1,20 +1,34 @@
 require("dotenv").config()
-const app = require("express")()
+
+const express = require("express")
+const app = express()
 const bodyParser = require("body-parser")
+const mongoose = require("mongoose")
 
 const PORT = process.env.PORT || 3000
 const ACCOUNT_SID = process.env.ACCOUNT_SID
 const AUTH_TOKEN = process.env.AUTH_TOKEN
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
+const MONGODB_URI = process.env.MONGODB_URI
 
 const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN)
 const MessagingResponse = require("twilio").twiml.MessagingResponse
 
-let garbageWeek = false
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+
+const FoodModel = require("./models/Food")
+const GarbageModel = require("./models/Garbage")
+const TowelModel = require("./models/Towel")
+const DebtModel = require("./models/Debt")
+
+let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
-let iter = 3
-let towel = 1
+let iter = 0
+let towel = 2
 
 // [Chore-Assignee, Code]
 let outstandingTowelChore = []
@@ -36,7 +50,6 @@ function validDebtCollectorUsage(msg) {
 
   let nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
   let i = 0
-  let tot = 0
   let names = []
   let amount = ""
   let temp = ""
