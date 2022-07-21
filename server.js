@@ -141,18 +141,20 @@ app.get("/", (req, res) => {
   res.send("Go to /see-state to see the state of this application")
 })
 
-app.get("/see-state", (req, res) => {
-  let state = {
-    garbageWeek,
-    iter,
-    towel,
-    outstandingDebt,
-    outstandingGarbageChore,
-    outstandingTowelChore,
-  }
+// TODO
 
-  res.send(state)
-})
+// app.get("/see-state", (req, res) => {
+//   let state = {
+//     garbageWeek,
+//     iter,
+//     towel,
+//     outstandingDebt,
+//     outstandingGarbageChore,
+//     outstandingTowelChore,
+//   }
+
+//   res.send(state)
+// })
 
 app.get("/once_per_hour", (req, res) => {
   // Check to see if there are any outstanding important chores
