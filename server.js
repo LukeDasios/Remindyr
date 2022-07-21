@@ -19,28 +19,16 @@ mongoose.connect(MONGODB_URI, {
   useUnifiedTopology: true,
 })
 
-const FoodModel = require("./models/Food")
 const GarbageModel = require("./models/Garbage")
 const TowelModel = require("./models/Towel")
 const DebtModel = require("./models/Debt")
 
-let garbageWeek = true
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
-let iter = 0
-let towel = 2
 
-// [Chore-Assignee, Code]
-let outstandingTowelChore = []
-
-// [Chore-Assignee, Code]
-let outstandingGarbageChore = []
-
-// [Lender, Borrower, Code, Amount, Reason, Days]
-let outstandingDebt = []
-
-function whoIsNext(num) {
-  return num === 3 ? "Luke" : theBoys[num + 1]
+function whoIsNext(name) {
+  let index = theBoys.indexOf(name)
+  return index === 3 ? "Luke" : theBoys[index + 1]
 }
 
 function validDebtCollectorUsage(msg) {
@@ -173,21 +161,57 @@ app.get("/once_per_hour", (req, res) => {
   let date = new Date()
   let day = date.getDay()
 
-  if (day === 2 && outstandingGarbageChore.length === 2) {
+  if (day === 2) {
     // Garbage Day
-    client.messages.create({
-      body: garbageWeek
-        ? `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[1]} when the job is done. Cheers.`
-        : `Hi ${theBoys[iter]}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${outstandingGarbageChore[1]} when the job is done. Cheers.`,
-      to: numbers[iter],
-      from: TWILIO_PHONE_NUMBER,
+    GarbageModel.find({}, async (err, garbages) => {
+      if (err) {
+        console.log(err)
+        return
+      }
+
+      let garbageChore = garbages[0]
+      let name = garbageChore.name
+      let code = garbageChore.code
+      let garbageWeek = garbageChore.garbageWeek
+      let completed = garbageChore.completed
+      let phoneNumber = numbers[theBoys.indexOf(name)]
+
+      if (completed) {
+        // Don't send any message
+      } else {
+        client.messages.create({
+          body: garbageWeek
+            ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
+            : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+          to: phoneNumber,
+          from: TWILIO_PHONE_NUMBER,
+        })
+      }
     })
-  } else if (day === 4 && outstandingTowelChore.length === 2) {
+  } else if (day === 4) {
     // Towel Day
-    client.messages.create({
-      body: `Hi ${theBoys[towel]}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${outstandingTowelChore[1]} when the job is done. Cheers.`,
-      to: numbers[towel],
-      from: TWILIO_PHONE_NUMBER,
+    TowelModel.find({}, async (err, towels) => {
+      if (err) {
+        console.log(err)
+        return
+      }
+
+      let towelChore = towels[0]
+
+      let name = towelChore.name
+      let code = towelChore.code
+      let completd = towelChore.completed
+      let phoneNumebr = numbers[theBoys.indexOf(name)]
+
+      if (completed) {
+        // Don't send any message
+      } else {
+        client.messages.create({
+          body: `Hi ${name}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${code} when the job is done. Cheers.`,
+          to: phoneNumber,
+          from: TWILIO_PHONE_NUMBER,
+        })
+      }
     })
   } else {
     // Don't send any messages
@@ -198,26 +222,48 @@ app.get("/once_per_hour", (req, res) => {
 
 app.get("/once_per_day", (req, res) => {
   // Message everyone with an outstanding debt
-  for (let i = 0; i < outstandingDebt.length; i++) {
-    // [Lender, Borrower, Code, Amount, Reason, Days]
-    let temp = outstandingDebt[i]
+  // for (let i = 0; i < outstandingDebt.length; i++) {
+  //   // [Lender, Borrower, Code, Amount, Reason, Days]
+  //   let temp = outstandingDebt[i]
 
-    let lender = temp[0]
-    let borrower = temp[1]
-    let code = temp[2]
-    let amount = temp[3]
-    let reason = temp[4]
-    let days = temp[5]
+  //   let lender = temp[0]
+  //   let borrower = temp[1]
+  //   let code = temp[2]
+  //   let amount = temp[3]
+  //   let reason = temp[4]
+  //   let days = temp[5]
 
-    client.messages.create({
-      body: `Hi ${borrower}! Please E-transfer ${lender} $${amount} for ${reason} and text me code ${code} when you do. This debt has been outstanding for ${days} day(s)`,
-      to: numbers[theBoys.indexOf(borrower)],
-      from: TWILIO_PHONE_NUMBER,
-    })
+  //   client.messages.create({
+  //     body: `Hi ${borrower}! Please E-transfer ${lender} $${amount} for ${reason} and text me code ${code} when you do. This debt has been outstanding for ${days} day(s)`,
+  //     to: numbers[theBoys.indexOf(borrower)],
+  //     from: TWILIO_PHONE_NUMBER,
+  //   })
 
-    // Days that the outstanding debt has been pending += 1
-    temp[5]++
-  }
+  //   // Days that the outstanding debt has been pending += 1
+  //   temp[5]++
+  // }
+
+  DebtModel.find({}, async (err, debts) => {
+    if (err) {
+      console.log(err)
+      return
+    }
+
+    for (let i = 0; i < debts.length; i++) {
+      let debt = debts[i]
+
+      client.messages.create({
+        body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${debt.reason}. Text me code ${debt.code} when you've repaid this. This debt has been outstanding for ${debt.days} day(s)`,
+        to: numbers[theBoys.indexOf(borrower)],
+        from: TWILIO_PHONE_NUMBER,
+      })
+    }
+
+    let garbageChore = garbages[0]
+    let id = garbageChore.id
+    await GarbageModel.findByIdAndRemove(id).exec()
+    console.log("deleted")
+  })
 
   res.send("Sent today's debt-collection reminders!")
 })
@@ -238,7 +284,7 @@ app.get("/once_per_selected_days", (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     })
 
-    outstandingGarbageChore.push(theBoys[iter], garbageCode)
+    // outstandingGarbageChore.push(theBoys[iter], garbageCode)
   } else if (day === 4) {
     // Towel day
     let towelCode = generateTowelChoreCode()
@@ -249,19 +295,110 @@ app.get("/once_per_selected_days", (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     })
 
-    outstandingTowelChore.push(theBoys[towel], towelCode)
+    GarbageModel.find({}, async (err, garbages) => {
+      if (err) {
+        console.log(err)
+        return
+      }
+
+      let garbageChore = garbages[0]
+
+      let id = garbageChore.id
+      let garbageWeek = garbageChore.garbageWeek
+      let completed = garbageChore.completed
+
+      if (completed) {
+        await GarbageModel.findByIdAndRemove(id).exec()
+
+        client.messages.create({
+          body: `Good Afternoon ${
+            theBoys[iter]
+          }! Please Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
+            iter
+          )} may start their week with a clean slate. After that, you are free!`,
+          to: numbers[iter],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        iter = iter == 3 ? 0 : iter + 1
+
+        const garbage_chore = new GarbageModel({
+          name: theBoys[iter],
+          code: generateGarbageChoreCode(),
+          garbageWeek: !garbageWeek,
+          completed: false,
+        })
+
+        try {
+          await garbage_chore.save()
+        } catch (err) {
+          console.log(
+            `Creation of new garbage chore failed with error of: ${err}`
+          )
+        }
+
+        res.send(
+          `Told ${theBoys[iter]} to empty out the garbage once last time, they are no longer on garbage duty`
+        )
+      } else {
+        res.send(
+          `The person who was on garbage duty last week did not do it and so they are on garbage duty again this week`
+        )
+      }
+    })
   } else if (day === 6) {
     //Saturday
-    client.messages.create({
-      body: `Good Afternoon ${
-        theBoys[iter]
-      }! Please Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
-        iter
-      )} may start their week with a clean slate. After that, you are free!`,
-      to: numbers[iter],
-      from: TWILIO_PHONE_NUMBER,
+    GarbageModel.find({}, async (err, garbages) => {
+      if (err) {
+        console.log(err)
+        return
+      }
+
+      let garbageChore = garbages[0]
+
+      let id = garbageChore.id
+      let garbageWeek = garbageChore.garbageWeek
+      let completed = garbageChore.completed
+
+      if (completed) {
+        await GarbageModel.findByIdAndRemove(id).exec()
+
+        client.messages.create({
+          body: `Good Afternoon ${
+            theBoys[iter]
+          }! Please Empty the Recycling, Green bin, and Garbage one last time so that ${whoIsNext(
+            iter
+          )} may start their week with a clean slate. After that, you are free!`,
+          to: numbers[iter],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        iter = iter == 3 ? 0 : iter + 1
+
+        const garbage_chore = new GarbageModel({
+          name: theBoys[iter],
+          code: generateGarbageChoreCode(),
+          garbageWeek: !garbageWeek,
+          completed: false,
+        })
+
+        try {
+          await garbage_chore.save()
+        } catch (err) {
+          console.log(
+            `Creation of new garbage chore failed with error of: ${err}`
+          )
+        }
+
+        res.send(
+          `Told ${theBoys[iter]} to empty out the garbage once last time, they are no longer on garbage duty`
+        )
+      } else {
+        res.send(
+          `The person who was on garbage duty last week did not do it and so they are on garbage duty again this week`
+        )
+      }
     })
-    iter = iter == 3 ? 0 : iter + 1
   } else {
     //Sunday
     client.messages.create({
@@ -271,7 +408,7 @@ app.get("/once_per_selected_days", (req, res) => {
     })
   }
 
-  res.send("Sent today's important chore reminders!")
+  res.send(`Told ${theBoys[iter]} that they are on garbage this week`)
 })
 
 app.get("/once_per_month", (req, res) => {
@@ -297,11 +434,30 @@ app.post("/sms", (req, res) => {
 
   if (msg.includes("commands")) {
     twiml.message(`
-    Commands:\n\ncommands -> what I do\n\norigin -> why I exist\n\nDC -> collect $ from your roomates`)
+    Commands:\n\nCommands -> what I do\n\nOrigin -> why I exist\n\nDC -> collect $ from your roomates\n\nOutstanding -> see outstanding debts\n\nSchedule -> see who's doing what chore this week`)
   } else if (msg.includes("origin")) {
     twiml.message(`
     \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
     `)
+  } else if (msg.includes("schedule")) {
+    let schedule = `Garbage: ${theBoys[iter]}\nTowels: ${theBoys[towel]}`
+
+    twiml.message(schedule)
+  } else if (msg.includes("outstanding")) {
+    DebtModel.find({}, (err, debts) => {
+      if (err) {
+        res.send(err)
+      }
+
+      let currentDebts = "Outstanding Debts:\n\n"
+
+      for (let i = 0; i < debts.length; i++) {
+        let debt = debts[i]
+        currentDebts += `${debt.borrower} owes ${debt.lender} $${debt.amount} for ${debt.reason}\nDays Outstanding: ${debt.days}\n\n`
+      }
+
+      twiml.message(currentDebts)
+    })
   } else if (msg.includes("dc")) {
     twiml.message(`
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza\ncollect 10 from Justin, Duncan for pizza

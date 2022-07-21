@@ -9,6 +9,14 @@ const TowelSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  completed: {
+    type: Boolean,
+    required: true,
+  },
+  next: {
+    type: String,
+    required: true,
+  },
 })
 
 const Towel = mongoose.model("Towel", TowelSchema)

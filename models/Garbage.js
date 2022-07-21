@@ -13,6 +13,14 @@ const GarbageSchema = new mongoose.Schema({
     type: Boolean,
     required: false,
   },
+  completed: {
+    type: Boolean,
+    required: true,
+  },
+  next: {
+    type: String,
+    required: true,
+  },
 })
 
 const Garbage = mongoose.model("Garbage", GarbageSchema)
