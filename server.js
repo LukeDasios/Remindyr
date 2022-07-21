@@ -413,7 +413,7 @@ app.post("/sms", async (req, res) => {
       towelPerson = towels[0].name
     })
 
-    let schedule = `Garbage: ${garbagePerson}\nTowels: ${towelperson}`
+    let schedule = `Garbage: ${garbagePerson}\nTowels: ${towelPerson}`
 
     twiml.message(schedule)
   } else if (msg.includes("outstanding")) {
