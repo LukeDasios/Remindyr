@@ -202,8 +202,8 @@ app.get("/once_per_hour", (req, res) => {
 
       let name = towelChore.name
       let code = towelChore.code
-      let completd = towelChore.completed
-      let phoneNumebr = numbers[theBoys.indexOf(name)]
+      let completed = towelChore.completed
+      let phoneNumber = numbers[theBoys.indexOf(name)]
 
       if (completed) {
         // Don't send any message
