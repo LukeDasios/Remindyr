@@ -378,7 +378,7 @@ app.get("/once_per_month", (req, res) => {
   res.send("Sent today's rent reminders!")
 })
 
-app.post("/sms", (req, res) => {
+app.post("/sms", async (req, res) => {
   // console.log(req.body)
   let originalMsg = req.body.Body.trim()
   let msg = originalMsg.toLowerCase()
