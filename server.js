@@ -318,14 +318,12 @@ app.get("/once_per_selected_days", (req, res) => {
           from: TWILIO_PHONE_NUMBER,
         })
 
-        next = whoIsNext(next)
-
         const garbage_chore = new GarbageModel({
-          name: theBoys[iter],
+          name: next,
           code: generateGarbageChoreCode(),
           garbageWeek: !garbageWeek,
           completed: false,
-          next: next,
+          next: whoIsNext(next),
         })
 
         try {
@@ -396,7 +394,26 @@ app.post("/sms", async (req, res) => {
     \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
     `)
   } else if (msg.includes("schedule")) {
-    let schedule = `Garbage: ${theBoys[iter]}\nTowels: ${theBoys[towel]}`
+    let garbagePerson
+    let towelPerson
+
+    GarbageModel.find({}, (err, garbages) => {
+      if (err) {
+        res.send(err)
+      }
+
+      garbagePerson = garbages[0].name
+    })
+
+    TowelModel.find({}, (err, towels) => {
+      if (err) {
+        res.send(err)
+      }
+
+      towelPerson = towels[0].name
+    })
+
+    let schedule = `Garbage: ${garbagePerson}\nTowels: ${towelperson}`
 
     twiml.message(schedule)
   } else if (msg.includes("outstanding")) {
