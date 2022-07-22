@@ -145,8 +145,6 @@ app.get("/once_per_hour", async (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
 
-  console.log("hello?")
-
   let date = new Date()
   let day = date.getDay()
 
@@ -172,12 +170,6 @@ app.get("/once_per_hour", async (req, res) => {
   } else if (day === 4) {
     // Towel Day
     let towelChore = await TowelModel.findOne({})
-
-    setTimeout(10000, () => {
-      // Waste time
-    })
-
-    console.log(towelChore)
 
     let name = towelChore.name
     let code = towelChore.code
