@@ -173,6 +173,10 @@ app.get("/once_per_hour", async (req, res) => {
     // Towel Day
     let towelChore = await TowelModel.findOne({})
 
+    setTimeout(10000, () => {
+      // Waste time
+    })
+
     console.log(towelChore)
 
     let name = towelChore.name
