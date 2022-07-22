@@ -141,10 +141,6 @@ app.get("/", (req, res) => {
   res.send("Go to /see-state to see the state of this application")
 })
 
-app.get("/test", (req, res) => {
-  res.send("Test")
-})
-
 app.get("/once_per_hour", async (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
@@ -199,7 +195,7 @@ app.get("/once_per_day", async (req, res) => {
 
     client.messages.create({
       body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${debt.reason}. Text me code ${debt.code} when you've repaid this. This debt has been outstanding for ${debt.days} day(s)`,
-      to: numbers[theBoys.indexOf(borrower)],
+      to: numbers[theBoys.indexOf(debt.borrower)],
       from: TWILIO_PHONE_NUMBER,
     })
   }
