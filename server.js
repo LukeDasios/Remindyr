@@ -141,7 +141,7 @@ app.get("/", (req, res) => {
   res.send("Go to /see-state to see the state of this application")
 })
 
-app.get("/once_per_hour", (req, res) => {
+app.get("/once_per_hour", async (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
 
@@ -187,7 +187,7 @@ app.get("/once_per_hour", (req, res) => {
   res.send("Sent an hourly important chore reminder!")
 })
 
-app.get("/once_per_day", (req, res) => {
+app.get("/once_per_day", async (req, res) => {
   let debts = await DebtModel.find({})
 
   for (let i = 0; i < debts.length; i++) {
@@ -203,7 +203,7 @@ app.get("/once_per_day", (req, res) => {
   res.send("Sent today's debt-collection reminders!")
 })
 
-app.get("/once_per_selected_days", (req, res) => {
+app.get("/once_per_selected_days", async (req, res) => {
   let date = new Date()
   let day = date.getDay()
 
