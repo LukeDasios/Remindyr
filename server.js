@@ -141,6 +141,10 @@ app.get("/", (req, res) => {
   res.send("Go to /see-state to see the state of this application")
 })
 
+app.get("/test", (req, res) => {
+  res.send("Test")
+})
+
 app.get("/once_per_hour", async (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
