@@ -171,6 +171,8 @@ app.get("/once_per_hour", async (req, res) => {
     // Towel Day
     let towelChore = await TowelModel.findOne({})
 
+    console.log(towelChore)
+
     let name = towelChore.name
     let code = towelChore.code
     let completed = towelChore.completed
