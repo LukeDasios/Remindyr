@@ -268,15 +268,33 @@ app.get("/once_per_selected_days", async (req, res) => {
           `Creation of new garbage chore failed with error of: ${err}`
         )
       }
-
-      res.send(
-        `Told ${name} to empty out the garbage once last time, they are no longer on garbage duty after today`
-      )
-    } else {
-      res.send(
-        `The person who was on garbage duty last week did not do it and so they are on garbage duty again this week`
-      )
     }
+
+    let towelChore = await TowelModel.findOne({})
+
+    id = towelChore.id
+    name = towelChore.name
+    completed = towelChore.completed
+    next = towelChore.next
+
+    if (completed) {
+      await TowelModel.findByIdAndRemove(id).exec()
+
+      const towel_chore = new TowelModel({
+        name: next,
+        code: generateTowelChoreCode(),
+        completed: false,
+        next: whoIsNext(next),
+      })
+
+      try {
+        await towel_chore.save()
+      } catch (err) {
+        console.log(`Creation of new towel chore failed with error of: ${err}`)
+      }
+    }
+
+    res.send(`Updated the garbage and towel documents.`)
   } else {
     //Sunday
     let garbageChore = await GarbageModel.findOne({})
@@ -411,20 +429,15 @@ app.post("/sms", async (req, res) => {
     if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
       let towelChore = await TowelModel.findOne({})
-
-      let id = towelChore.id
       let code = towelChore.code
 
       if (code === originalMsg) {
-        try {
-          await TowelModel.findById(id, (err, updatedTowelChore) => {
-            updatedTowelChore.code = generateTowelChoreCode()
-            updatedTowelChore.completed = true
-            updatedTowelChore.save()
-          })
-        } catch (err) {
-          console.log(err)
-        }
+        const filter = { name: towelChore.name }
+        const update = { completed: true }
+
+        await TowelModel.findOneAndUpdate(filter, update, {
+          new: true,
+        })
 
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
@@ -436,20 +449,15 @@ app.post("/sms", async (req, res) => {
       }
     } else if (msg[0] === "G") {
       let garbageChore = await GarbageModel.findOne({})
-
-      let id = garbageChore.id
       let code = garbageChore.code
 
       if (code === originalMsg) {
-        try {
-          await GarbageModel.findById(id, (err, updatedGarbageChore) => {
-            updatedGarbageChore.code = generateGarbageChoreCode()
-            updatedGarbageChore.completed = true
-            updatedGarbageChore.save()
-          })
-        } catch (err) {
-          console.log(err)
-        }
+        const filter = { name: garbageChore.name }
+        const update = { completed: true }
+
+        await GarbageModel.findOneAndUpdate(filter, update, {
+          new: true,
+        })
 
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
