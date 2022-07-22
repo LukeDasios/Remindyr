@@ -193,8 +193,15 @@ app.get("/once_per_day", async (req, res) => {
   for (let i = 0; i < debts.length; i++) {
     let debt = debts[i]
 
+    const filter = { name: debt.id }
+    const update = { days: debt.days + 1 }
+
+    await DebtModel.findOneAndUpdate(filter, update, {
+      new: true,
+    })
+
     client.messages.create({
-      body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${debt.reason}. Text me code ${debt.code} when you've repaid this. This debt has been outstanding for ${debt.days} day(s)`,
+      body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${debt.reason}. Text me code ${debt.code} when you've repaid this. This debt has been outstanding for ${debt.days + 1} day(s)`,
       to: numbers[theBoys.indexOf(debt.borrower)],
       from: TWILIO_PHONE_NUMBER,
     })
