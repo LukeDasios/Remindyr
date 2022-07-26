@@ -152,21 +152,23 @@ app.get("/once_per_hour", async (req, res) => {
     // Garbage Day
     let garbageChore = await GarbageModel.findOne({})
 
+    console.log(garbageChore)
+
     let name = garbageChore.name
     let code = garbageChore.code
     let garbageWeek = garbageChore.garbageWeek
     let completed = garbageChore.completed
     let phoneNumber = numbers[theBoys.indexOf(name)]
 
-    if (!completed) {
-      client.messages.create({
-        body: garbageWeek
-          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
-        to: phoneNumber,
-        from: TWILIO_PHONE_NUMBER,
-      })
-    }
+    // if (!completed) {
+    //   client.messages.create({
+    //     body: garbageWeek
+    //       ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
+    //       : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+    //     to: phoneNumber,
+    //     from: TWILIO_PHONE_NUMBER,
+    //   })
+    // }
   } else if (day === 4) {
     // Towel Day
     let towelChore = await TowelModel.findOne({})
@@ -201,7 +203,13 @@ app.get("/once_per_day", async (req, res) => {
     })
 
     client.messages.create({
-      body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${debt.reason}. Text me code ${debt.code} when you've repaid this. This debt has been outstanding for ${debt.days + 1} day(s)`,
+      body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${
+        debt.reason
+      }. Text me code ${
+        debt.code
+      } when you've repaid this. This debt has been outstanding for ${
+        debt.days + 1
+      } day(s)`,
       to: numbers[theBoys.indexOf(debt.borrower)],
       from: TWILIO_PHONE_NUMBER,
     })
