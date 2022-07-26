@@ -160,15 +160,15 @@ app.get("/once_per_hour", async (req, res) => {
     let completed = garbageChore.completed
     let phoneNumber = numbers[theBoys.indexOf(name)]
 
-    // if (!completed) {
-    //   client.messages.create({
-    //     body: garbageWeek
-    //       ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-    //       : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
-    //     to: phoneNumber,
-    //     from: TWILIO_PHONE_NUMBER,
-    //   })
-    // }
+    if (!completed) {
+      client.messages.create({
+        body: garbageWeek
+          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
+          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+        to: phoneNumber,
+        from: TWILIO_PHONE_NUMBER,
+      })
+    }
   } else if (day === 4) {
     // Towel Day
     let towelChore = await TowelModel.findOne({})
