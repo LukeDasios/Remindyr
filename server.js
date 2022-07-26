@@ -195,7 +195,7 @@ app.get("/once_per_day", async (req, res) => {
   for (let i = 0; i < debts.length; i++) {
     let debt = debts[i]
 
-    const filter = { id: debt.id }
+    const filter = { code: debt.code }
     const update = { days: debt.days + 1 }
 
     await DebtModel.findOneAndUpdate(filter, update, {
