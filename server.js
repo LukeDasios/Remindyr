@@ -20,6 +20,7 @@ mongoose.connect(MONGODB_URI, {
 })
 
 const GarbageModel = require("./models/Garbage")
+const GarbageReturnModel = require("./models/GarbageReturn")
 const TowelModel = require("./models/Towel")
 const DebtModel = require("./models/Debt")
 
@@ -114,6 +115,16 @@ function generateGarbageChoreCode() {
   return code
 }
 
+function generateGarbageReturnChoreCode() {
+  let code = "R"
+
+  for (let i = 0; i < 4; i++) {
+    code += Math.floor(Math.random() * 10).toString()
+  }
+
+  return code
+}
+
 function generateTowelChoreCode() {
   let code = "T"
 
@@ -169,9 +180,32 @@ app.get("/once_per_hour", async (req, res) => {
         from: TWILIO_PHONE_NUMBER,
       })
     }
+  } else if (day === 3) {
+    // Garbage Return Day
+    let garbageReturnChore = await GarbageReturnModel.findOne({})
+
+    console.log(garbageReturnChore)
+
+    let name = garbageReturnChore.name
+    let code = garbageReturnChore.code
+    let garbageWeek = garbageReturnChore.garbageWeek
+    let completed = garbageReturnChore.completed
+    let phoneNumber = numbers[theBoys.indexOf(name)]
+
+    if (!completed) {
+      client.messages.create({
+        body: garbageWeek
+          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`
+          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be brought back from the curb to house from the curb. Text me the code ${code} when the job is done. Cheers.`,
+        to: phoneNumber,
+        from: TWILIO_PHONE_NUMBER,
+      })
+    }
   } else if (day === 4) {
     // Towel Day
     let towelChore = await TowelModel.findOne({})
+
+    console.log(towelChore)
 
     let name = towelChore.name
     let code = towelChore.code
@@ -232,8 +266,23 @@ app.get("/once_per_selected_days", async (req, res) => {
 
     client.messages.create({
       body: garbageWeek
-        ? `Good Evening ${name}! In case you haven't already done so already, the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-        : `Good Evening ${name}! In case you haven't already done so already, the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
+        : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+      to: numbers[theBoys.indexOf(name)],
+      from: TWILIO_PHONE_NUMBER,
+    })
+  } else if (day === 3) {
+    // Bring garbage back to curb day
+    let garbageReturn = await GarbageReturnModel.findOne({})
+
+    let name = garbageReturn.name
+    let code = garbageReturn.code
+    let garbageWeek = garbageReturn.garbageWeek
+
+    client.messages.create({
+      body: garbageWeek
+        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`
+        : `Hi ${name}! The Recycling and Compost need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`,
       to: numbers[theBoys.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -285,6 +334,34 @@ app.get("/once_per_selected_days", async (req, res) => {
       }
     }
 
+    let garbageReturnChore = await GarbageReturnModel.findOne({})
+
+    id = garbageReturnChore.id
+    name = garbageReturnChore.name
+    garbageWeek = garbageReturnChore.garbageWeek
+    completed = garbageReturnChore.completed
+    next = garbageReturnChore.next
+
+    if (completed) {
+      await GarbageReturnModel.findByIdAndRemove(id).exec()
+
+      const garbage_return_chore = new GarbageReturnModel({
+        name: next,
+        code: generateGarbageReturnChoreCode(),
+        garbageWeek: !garbageWeek,
+        completed: false,
+        next: whoIsNext(next),
+      })
+
+      try {
+        await garbage_return_chore.save()
+      } catch (err) {
+        console.log(
+          `Creation of new garbage_return_chore chore failed with error of: ${err}`
+        )
+      }
+    }
+
     let towelChore = await TowelModel.findOne({})
 
     id = towelChore.id
@@ -309,7 +386,7 @@ app.get("/once_per_selected_days", async (req, res) => {
       }
     }
 
-    res.send(`Updated the garbage and towel documents.`)
+    res.send(`Updated the garbage, garbageReturn, and towel documents.`)
   } else {
     //Sunday
     let garbageChore = await GarbageModel.findOne({})
@@ -476,6 +553,26 @@ app.post("/sms", async (req, res) => {
 
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the garbage chore. Thank you!`
+        )
+      } else {
+        twiml.message(
+          `Sorry, I don't understand. Are you sure that's a valid code?`
+        )
+      }
+    } else if (msg[0] === "R") {
+      let garbageReturnChore = await GarbageReturnModel.findOne({})
+      let code = garbageReturnChore.code
+
+      if (code === originalMsg) {
+        const filter = { name: garbageReturnChore.name }
+        const update = { completed: true }
+
+        await GarbageReturnModel.findOneAndUpdate(filter, update, {
+          new: true,
+        })
+
+        twiml.message(
+          `Hi ${sender}! I've confirmed that you've completed the garbage return chore. Thank you!`
         )
       } else {
         twiml.message(
