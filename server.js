@@ -314,7 +314,7 @@ app.get("/once_per_selected_days", async (req, res) => {
       await GarbageModel.findByIdAndRemove(id).exec()
 
       client.messages.create({
-        body: `Good Afternoon ${name}! Please Empty the Recycling, Green bin, and Garbage one last time so that ${next} may start their week with a clean slate. After that, you are free!`,
+        body: `Good Afternoon ${name}! Please Empty the Recycling, Green bin, and Garbage one last time so that ${next} may start his week with a clean slate. After that, you are free!`,
         to: numbers[theBoys.indexOf(next)],
         from: TWILIO_PHONE_NUMBER,
       })
