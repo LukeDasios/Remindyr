@@ -23,5 +23,5 @@ const GarbageReturnSchema = new mongoose.Schema({
   },
 })
 
-const GarbageReturn = mongoose.model("Garbage", GarbageReturnSchema)
+const GarbageReturn = mongoose.model("GarbageReturn", GarbageReturnSchema)
 module.exports = GarbageReturn
