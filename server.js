@@ -253,10 +253,8 @@ app.get("/once_per_day", async (req, res) => {
 })
 
 app.get("/once_per_selected_days", async (req, res) => {
-  // let date = new Date()
-  // let day = date.getDay()
-
-  let day = 6
+  let date = new Date()
+  let day = date.getDay()
 
   if (day === 2) {
     // Garbage day
