@@ -304,6 +304,8 @@ app.get("/once_per_selected_days", async (req, res) => {
     //Saturday
     let garbageChore = await GarbageModel.findOne({})
 
+    console.log(garbageChore)
+
     let id = garbageChore.id
     let name = garbageChore.name
     let garbageWeek = garbageChore.garbageWeek
@@ -338,6 +340,8 @@ app.get("/once_per_selected_days", async (req, res) => {
 
     let garbageReturnChore = await GarbageReturnModel.findOne({})
 
+    console.log(garbageReturnChore)
+
     id = garbageReturnChore.id
     name = garbageReturnChore.name
     garbageWeek = garbageReturnChore.garbageWeek
@@ -365,6 +369,8 @@ app.get("/once_per_selected_days", async (req, res) => {
     }
 
     let towelChore = await TowelModel.findOne({})
+
+    console.log(towelChore)
 
     id = towelChore.id
     name = towelChore.name
