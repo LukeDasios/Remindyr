@@ -27,6 +27,12 @@ const DebtModel = require("./models/Debt")
 const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
 const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
 
+// const debtIndividuals = ["Luke", "Duncan", "Sam", "Jp", "Justin"]
+// const debtNumbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331", "+16475247204"]
+
+// const choreIndividuals = ["Luke", "Justin"]
+// const choreNumbers = ["+16479385063", "+16475247204"]
+
 function whoIsNext(name) {
   let index = theBoys.indexOf(name)
   return index === 3 ? "Luke" : theBoys[index + 1]
