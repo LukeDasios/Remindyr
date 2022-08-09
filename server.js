@@ -24,18 +24,25 @@ const GarbageReturnModel = require("./models/GarbageReturn")
 const TowelModel = require("./models/Towel")
 const DebtModel = require("./models/Debt")
 
-const theBoys = ["Luke", "Duncan", "Sam", "Jp"]
-const numbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331"]
+const debtIndividuals = ["Luke", "Duncan", "Sam", "Jp", "Justin"]
+const debtNumbers = [
+  "+16479385063",
+  "+14168261333",
+  "+14168447692",
+  "+14166169331",
+  "+16475247204",
+]
 
-// const debtIndividuals = ["Luke", "Duncan", "Sam", "Jp", "Justin"]
-// const debtNumbers = ["+16479385063", "+14168261333", "+14168447692", "+14166169331", "+16475247204"]
+const choreIndividuals = ["Luke", "Justin"]
+const choreNumbers = ["+16479385063", "+16475247204"]
 
-// const choreIndividuals = ["Luke", "Justin"]
-// const choreNumbers = ["+16479385063", "+16475247204"]
+const RENT_AMOUNT = 625
 
 function whoIsNext(name) {
-  let index = theBoys.indexOf(name)
-  return index === 3 ? "Luke" : theBoys[index + 1]
+  let index = choreIndividuals.indexOf(name)
+  return index === choreIndividuals.length - 1
+    ? choreIndividuals[0]
+    : choreIndividuals[index + 1]
 }
 
 function validDebtCollectorUsage(msg) {
@@ -94,7 +101,7 @@ function validDebtCollectorUsage(msg) {
 
   names.push(temp)
 
-  if (!names.every((name) => theBoys.includes(name))) return false
+  if (!names.every((name) => debtIndividuals.includes(name))) return false
 
   amount = parseFloat(parseFloat(amount).toFixed(2) / names.length)
 
@@ -155,7 +162,19 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.listen(PORT)
 
 app.get("/", (req, res) => {
-  res.send("Go to /see-state to see the state of this application")
+  res.send("Up and running!")
+})
+
+app.get("/start", (req, res) => {
+  for (let i = 0; i < debtIndividuals.length; i++) {
+    client.messages.create({
+      body: `Hey guys, this is the new Twilly #. I was able to buy a Waterloo one this time around. Be sure to save this as a contact!\n\n-Luke`,
+      to: debtIndividuals[i],
+      from: TWILIO_PHONE_NUMBER,
+    })
+  }
+
+  res.send("Send the intial messages to everyone!")
 })
 
 app.get("/once_per_hour", async (req, res) => {
@@ -175,13 +194,13 @@ app.get("/once_per_hour", async (req, res) => {
     let code = garbageChore.code
     let garbageWeek = garbageChore.garbageWeek
     let completed = garbageChore.completed
-    let phoneNumber = numbers[theBoys.indexOf(name)]
+    let phoneNumber = numbers[choreIndividuals.indexOf(name)]
 
     if (!completed) {
       client.messages.create({
         body: garbageWeek
-          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+          ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me "${code}" when the job is done.`
+          : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me "${code}" when the job is done.`,
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER,
       })
@@ -196,13 +215,11 @@ app.get("/once_per_hour", async (req, res) => {
     let code = garbageReturnChore.code
     let garbageWeek = garbageReturnChore.garbageWeek
     let completed = garbageReturnChore.completed
-    let phoneNumber = numbers[theBoys.indexOf(name)]
+    let phoneNumber = numbers[debtIndividuals.indexOf(name)]
 
     if (!completed) {
       client.messages.create({
-        body: garbageWeek
-          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`
-          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be brought back from the curb to house from the curb. Text me the code ${code} when the job is done. Cheers.`,
+        body: `Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER,
       })
@@ -216,11 +233,11 @@ app.get("/once_per_hour", async (req, res) => {
     let name = towelChore.name
     let code = towelChore.code
     let completed = towelChore.completed
-    let phoneNumber = numbers[theBoys.indexOf(name)]
+    let phoneNumber = numbers[choreIndividuals.indexOf(name)]
 
     if (!completed) {
       client.messages.create({
-        body: `Hi ${name}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${code} when the job is done. Cheers.`,
+        body: `Hi ${name}! The towels need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER,
       })
@@ -243,14 +260,14 @@ app.get("/once_per_day", async (req, res) => {
     })
 
     client.messages.create({
-      body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${
+      body: `Hi ${debt.borrower}! You owe ${debt.lender} $${debt.amount} for ${
         debt.reason
-      }. Text me code ${
+      }. Text me "${
         debt.code
-      } when you've repaid this. This debt has been outstanding for ${
+      }" when you've repaid this. Outstanding for ${
         debt.days + 1
       } day(s)`,
-      to: numbers[theBoys.indexOf(debt.borrower)],
+      to: numbers[debtIndividuals.indexOf(debt.borrower)],
       from: TWILIO_PHONE_NUMBER,
     })
   }
@@ -272,9 +289,9 @@ app.get("/once_per_selected_days", async (req, res) => {
 
     client.messages.create({
       body: garbageWeek
-        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-        : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
-      to: numbers[theBoys.indexOf(name)],
+        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb. Text me "${code}" when the job is done.`
+        : `Hi ${name}! The Recycling and Compost need to be taken to the curb. Text me "${code}" when the job is done.`,
+      to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
   } else if (day === 3) {
@@ -286,10 +303,8 @@ app.get("/once_per_selected_days", async (req, res) => {
     let garbageWeek = garbageReturn.garbageWeek
 
     client.messages.create({
-      body: garbageWeek
-        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`
-        : `Hi ${name}! The Recycling and Compost need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`,
-      to: numbers[theBoys.indexOf(name)],
+      body:`Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
+      to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
   } else if (day === 4) {
@@ -300,8 +315,8 @@ app.get("/once_per_selected_days", async (req, res) => {
     let code = towelChore.code
 
     client.messages.create({
-      body: `Good Afternoon ${name}! It's your turn on towel duty! They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${code} when the job is done. Cheers.`,
-      to: numbers[theBoys.indexOf(name)],
+      body: `Hi ${name}, It's your turn on towel duty! They need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
+      to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
   } else if (day === 6) {
@@ -320,8 +335,8 @@ app.get("/once_per_selected_days", async (req, res) => {
       await GarbageModel.findByIdAndRemove(id).exec()
 
       client.messages.create({
-        body: `Good Afternoon ${name}! Please Empty the Recycling, Green bin, and Garbage one last time so that ${next} may start his week with a clean slate. After that, you are free!`,
-        to: numbers[theBoys.indexOf(next)],
+        body: `Hi ${name}! Empty the Recycling, Green bin, and Garbage one last time so that ${next} may start his week with a clean slate. After that, you are free!`,
+        to: numbers[choreIndividuals.indexOf(next)],
         from: TWILIO_PHONE_NUMBER,
       })
 
@@ -406,8 +421,8 @@ app.get("/once_per_selected_days", async (req, res) => {
     let name = garbageChore.name
 
     client.messages.create({
-      body: `Good Afternoon ${name}! Heads up, You're on garbage duty this week.`,
-      to: numbers[theBoys.indexOf(name)],
+      body: `Good Afternoon ${name}! Heads up, you're on garbage duty this week.`,
+      to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
 
@@ -417,23 +432,62 @@ app.get("/once_per_selected_days", async (req, res) => {
 
 app.get("/once_per_month", (req, res) => {
   // Rent reminder
-  for (let i = 0; i < theBoys.length; i++) {
+  for (let i = 0; i < debtIndividuals.length; i++) {
     client.messages.create({
-      body: `Hello ${theBoys[i]}! Heads up, $625 in rent is due today.`,
+      body: `Hello ${debtIndividuals[i]}! Heads up, $${RENT_AMOUNT} in rent is due today.`,
       to: numbers[i],
       from: TWILIO_PHONE_NUMBER,
     })
+  }
+
+  // WiFi reminder
+  for (let i = 0; i < debtIndividuals.length; i++) {
+    if (debtIndividuals[i] !== "Duncan") {
+      // Create a new debt
+      let code = generateDebtCollectionCode()
+
+      const debt = new DebtModel({
+        lender: "Duncan",
+        borrower: debtIndividuals[i],
+        code: code,
+        amount: 25,
+        reason: "Wifi",
+        days: 0,
+      })
+
+      try {
+        await debt.save()
+
+        //Message lender (Duncan)
+        client.messages.create({
+          body: `Succesfully deployed your debt-collector on ${debtIndividuals[i]} for WiFi totalling $25!`,
+          to: numbers[debtIndividuals.indexOf("Duncan")],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        // Message borrowers
+        client.messages.create({
+          body: `E-transfer Duncan $25 for the WiFi and text me "${code}" once you have.`,
+          to: numbers[debtIndividuals[i]],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        console.log(debt)
+        console.log("Succesfully created the new wifi debt!")
+      } catch (err) {
+        console.log(`Creation of new debt failed with error of: ${err}`)
+      }
+    }
   }
 
   res.send("Sent today's rent reminders!")
 })
 
 app.post("/sms", async (req, res) => {
-  // console.log(req.body)
   let originalMsg = req.body.Body.trim()
   let msg = originalMsg.toLowerCase()
   let senderNumber = req.body.From
-  let sender = theBoys[numbers.indexOf(senderNumber)]
+  let sender = debtIndividuals[numbers.indexOf(senderNumber)]
   const twiml = new MessagingResponse()
 
   if (msg.includes("commands")) {
@@ -441,13 +495,14 @@ app.post("/sms", async (req, res) => {
     Commands:\n\nCommands -> what I do\n\nOrigin -> why I exist\n\nDC -> collect $ from your roomates\n\nOutstanding -> see outstanding debts\n\nSchedule -> see who's doing what chore this week`)
   } else if (msg.includes("origin")) {
     twiml.message(`
-    \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
+    \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, help out. Delegate the small stuff to me so you can focus on the things that really matter ❤️
     `)
   } else if (msg.includes("schedule")) {
     let garbageChore = await GarbageModel.findOne({})
+    let garbageReturnChore = await GarbageReturnModel.findOne({})
     let towelChore = await TowelModel.findOne({})
 
-    let schedule = `Garbage: ${garbageChore.name}\nTowels: ${towelChore.name}`
+    let schedule = `Garbage: ${garbageChore.name}\nGarbage Return: ${garbageReturnChore.name}\nTowels: ${towelChore.name}`
 
     twiml.message(schedule)
   } else if (msg.includes("outstanding")) {
@@ -463,7 +518,7 @@ app.post("/sms", async (req, res) => {
     twiml.message(currentDebts)
   } else if (msg.includes("dc")) {
     twiml.message(`
-      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza\ncollect 10 from Justin, Duncan for pizza
+      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza (each owe you 5)\ncollect 10 from Justin, Duncan for pizza
     `)
   } else if (msg.includes("collect")) {
     let obj = validDebtCollectorUsage(originalMsg)
@@ -479,8 +534,8 @@ app.post("/sms", async (req, res) => {
         let borrower = names[i]
 
         client.messages.create({
-          body: `E-transfer ${sender} $${amount} for the ${reason} and text me ${code} once you have.`,
-          to: numbers[theBoys.indexOf(borrower)],
+          body: `E-transfer ${sender} $${amount} for the ${reason} and text me "${code}" once you have.`,
+          to: numbers[debtIndividuals.indexOf(borrower)],
           from: TWILIO_PHONE_NUMBER,
         })
 
@@ -497,6 +552,8 @@ app.post("/sms", async (req, res) => {
 
         try {
           await debt.save()
+          console.log("Succesfully created a new debt!")
+          console.log(debt)
         } catch (err) {
           console.log(`Creation of new debt failed with error of: ${err}`)
         }
@@ -521,7 +578,7 @@ app.post("/sms", async (req, res) => {
 
       // Send a confirmation text to the lender
       twiml.message(`
-        Succesfully deployed your debt-collector on ${namesListed} for ${reason} totalling $${amount}! I'll let you once I've collected this for you.
+        Succesfully deployed your debt-collector on ${namesListed} for ${reason} totalling $${amount}!
       `)
     } else {
       twiml.message(`
@@ -606,15 +663,16 @@ app.post("/sms", async (req, res) => {
         let reason = debt.reason
         let amount = debt.amount
         let lender = debt.lender
+        let days = debt.days
 
         await DebtModel.findByIdAndRemove(id).exec()
         twiml.message(
-          `Hi ${sender}! I've confirmed that you've e-transferred ${lender} $${amount} for ${reason}. Thank you!`
+          `Hi ${sender}! I've confirmed that you've repaid ${lender} $${amount} for ${reason}. Thank you!`
         )
 
         client.messages.create({
-          body: `Hi ${lender}! I have just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you for ${reason}!`,
-          to: numbers[theBoys.indexOf(lender)],
+          body: `Hi ${lender}! ${sender} has repaid you the $${amount} he owed you for ${reason}! Took ${days} day(s).`,
+          to: numbers[debtIndividuals.indexOf(lender)],
           from: TWILIO_PHONE_NUMBER,
         })
       } else {
