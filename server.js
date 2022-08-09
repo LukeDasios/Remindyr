@@ -262,9 +262,7 @@ app.get("/once_per_day", async (req, res) => {
     client.messages.create({
       body: `Hi ${debt.borrower}! You owe ${debt.lender} $${debt.amount} for ${
         debt.reason
-      }. Text me "${
-        debt.code
-      }" when you've repaid this. Outstanding for ${
+      }. Text me "${debt.code}" when you've repaid this. Outstanding for ${
         debt.days + 1
       } day(s)`,
       to: numbers[debtIndividuals.indexOf(debt.borrower)],
@@ -303,7 +301,7 @@ app.get("/once_per_selected_days", async (req, res) => {
     let garbageWeek = garbageReturn.garbageWeek
 
     client.messages.create({
-      body:`Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
+      body: `Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
       to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -430,7 +428,7 @@ app.get("/once_per_selected_days", async (req, res) => {
   }
 })
 
-app.get("/once_per_month", (req, res) => {
+app.get("/once_per_month", async (req, res) => {
   // Rent reminder
   for (let i = 0; i < debtIndividuals.length; i++) {
     client.messages.create({
