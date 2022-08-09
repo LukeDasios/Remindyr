@@ -169,7 +169,7 @@ app.get("/start", (req, res) => {
   for (let i = 0; i < debtIndividuals.length; i++) {
     client.messages.create({
       body: `Hey guys, this is the new Twilly #. I was able to buy a Waterloo one this time around. Be sure to save this as a contact!\n\n-Luke`,
-      to: debtIndividuals[i],
+      to: debtNumbers[i],
       from: TWILIO_PHONE_NUMBER,
     })
   }
@@ -213,7 +213,6 @@ app.get("/once_per_hour", async (req, res) => {
 
     let name = garbageReturnChore.name
     let code = garbageReturnChore.code
-    let garbageWeek = garbageReturnChore.garbageWeek
     let completed = garbageReturnChore.completed
     let phoneNumber = debtNumbers[debtIndividuals.indexOf(name)]
 
