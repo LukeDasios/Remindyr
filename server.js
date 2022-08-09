@@ -165,6 +165,18 @@ app.get("/", (req, res) => {
   res.send("Go to /see-state to see the state of this application")
 })
 
+app.get("/start", (req, res) => {
+  for (let i = 0; i < debtIndividuals.length; i++) {
+    client.messages.create({
+      body: `Hey guys, this is the new Twilly #. I was able to buy a Waterloo one this time around. Be sure to save this as a contact!\n\n-Luke`,
+      to: debtIndividuals[i],
+      from: TWILIO_PHONE_NUMBER,
+    })
+  }
+
+  res.send("Send the intial messages to everyone!")
+})
+
 app.get("/once_per_hour", async (req, res) => {
   // Check to see if there are any outstanding important chores
   // Message the person with the outstanding important chore
@@ -250,11 +262,11 @@ app.get("/once_per_day", async (req, res) => {
     })
 
     client.messages.create({
-      body: `Daily reminder that you owe ${debt.lender} $${debt.amount} for ${
+      body: `Hi ${debt.borrower}! You owe ${debt.lender} $${debt.amount} for ${
         debt.reason
-      }. Text me code ${
+      }. Text me "${
         debt.code
-      } when you've repaid this. This debt has been outstanding for ${
+      }" when you've repaid this. This debt has been outstanding for ${
         debt.days + 1
       } day(s)`,
       to: numbers[debtIndividuals.indexOf(debt.borrower)],
@@ -432,11 +444,42 @@ app.get("/once_per_month", (req, res) => {
     })
   }
 
+  // WiFi reminder
+  for (let i = 0; i < debtIndividuals.length; i++) {
+    if (debtIndividuals[i] !== "Duncan") {
+      // Create a new debt
+      let code = generateDebtCollectionCode()
+
+      const debt = new DebtModel({
+        lender: "Duncan",
+        borrower: debtIndividuals[i],
+        code: code,
+        amount: 25,
+        reason: "Wifi",
+        days: 0,
+      })
+
+      try {
+        await debt.save()
+
+        client.messages.create({
+          body: `E-transfer Duncan $25 for the WiFi and text me ${code} once you have.`,
+          to: numbers[debtIndividuals[i]],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        console.log(debt)
+        console.log("Succesfully created the new wifi debt!")
+      } catch (err) {
+        console.log(`Creation of new debt failed with error of: ${err}`)
+      }
+    }
+  }
+
   res.send("Sent today's rent reminders!")
 })
 
 app.post("/sms", async (req, res) => {
-  // console.log(req.body)
   let originalMsg = req.body.Body.trim()
   let msg = originalMsg.toLowerCase()
   let senderNumber = req.body.From
@@ -448,13 +491,14 @@ app.post("/sms", async (req, res) => {
     Commands:\n\nCommands -> what I do\n\nOrigin -> why I exist\n\nDC -> collect $ from your roomates\n\nOutstanding -> see outstanding debts\n\nSchedule -> see who's doing what chore this week`)
   } else if (msg.includes("origin")) {
     twiml.message(`
-    \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, can help out. Delegate the small stuff to me so you can focus on what really matters ❤️
+    \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, help out. Delegate the small stuff to me so you can focus on the things that really matter ❤️
     `)
   } else if (msg.includes("schedule")) {
     let garbageChore = await GarbageModel.findOne({})
+    let garbageReturnChore = await GarbageReturnModel.findOne({})
     let towelChore = await TowelModel.findOne({})
 
-    let schedule = `Garbage: ${garbageChore.name}\nTowels: ${towelChore.name}`
+    let schedule = `Garbage: ${garbageChore.name}\nGarbage Return: ${garbageReturnChore.name}\nTowels: ${towelChore.name}`
 
     twiml.message(schedule)
   } else if (msg.includes("outstanding")) {
@@ -470,7 +514,7 @@ app.post("/sms", async (req, res) => {
     twiml.message(currentDebts)
   } else if (msg.includes("dc")) {
     twiml.message(`
-      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza\ncollect 10 from Justin, Duncan for pizza
+      The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza (each owe you 5)\ncollect 10 from Justin, Duncan for pizza
     `)
   } else if (msg.includes("collect")) {
     let obj = validDebtCollectorUsage(originalMsg)
@@ -504,6 +548,8 @@ app.post("/sms", async (req, res) => {
 
         try {
           await debt.save()
+          console.log("Succesfully created a new debt!")
+          console.log(debt)
         } catch (err) {
           console.log(`Creation of new debt failed with error of: ${err}`)
         }
