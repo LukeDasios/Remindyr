@@ -162,7 +162,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.listen(PORT)
 
 app.get("/", (req, res) => {
-  res.send("Go to /see-state to see the state of this application")
+  res.send("Up and running!")
 })
 
 app.get("/start", (req, res) => {
@@ -199,8 +199,8 @@ app.get("/once_per_hour", async (req, res) => {
     if (!completed) {
       client.messages.create({
         body: garbageWeek
-          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+          ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me "${code}" when the job is done.`
+          : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me "${code}" when the job is done.`,
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER,
       })
@@ -219,9 +219,7 @@ app.get("/once_per_hour", async (req, res) => {
 
     if (!completed) {
       client.messages.create({
-        body: garbageWeek
-          ? `Hi ${name}! Have you finished the garbage chore yet? the Recycling, Compost, and Garbage need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`
-          : `Hi ${name}! Have you finished the garbage chore yet? the Recycling and Compost need to be brought back from the curb to house from the curb. Text me the code ${code} when the job is done. Cheers.`,
+        body: `Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER,
       })
@@ -239,7 +237,7 @@ app.get("/once_per_hour", async (req, res) => {
 
     if (!completed) {
       client.messages.create({
-        body: `Hi ${name}! Have you finished the towel chore yet? They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${code} when the job is done. Cheers.`,
+        body: `Hi ${name}! The towels need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER,
       })
@@ -266,7 +264,7 @@ app.get("/once_per_day", async (req, res) => {
         debt.reason
       }. Text me "${
         debt.code
-      }" when you've repaid this. This debt has been outstanding for ${
+      }" when you've repaid this. Outstanding for ${
         debt.days + 1
       } day(s)`,
       to: numbers[debtIndividuals.indexOf(debt.borrower)],
@@ -291,8 +289,8 @@ app.get("/once_per_selected_days", async (req, res) => {
 
     client.messages.create({
       body: garbageWeek
-        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`
-        : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me the code ${code} when the job is done. Cheers.`,
+        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb. Text me "${code}" when the job is done.`
+        : `Hi ${name}! The Recycling and Compost need to be taken to the curb. Text me "${code}" when the job is done.`,
       to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -305,9 +303,7 @@ app.get("/once_per_selected_days", async (req, res) => {
     let garbageWeek = garbageReturn.garbageWeek
 
     client.messages.create({
-      body: garbageWeek
-        ? `Hi ${name}! The Recycling, Compost, and Garbage need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`
-        : `Hi ${name}! The Recycling and Compost need to be brought back to the house from the curb. Text me the code ${code} when the job is done. Cheers.`,
+      body:`Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
       to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -319,7 +315,7 @@ app.get("/once_per_selected_days", async (req, res) => {
     let code = towelChore.code
 
     client.messages.create({
-      body: `Good Afternoon ${name}! It's your turn on towel duty! They need to be washed, dryed, folded, and put back in their respective drawer upstairs. Text me the code ${code} when the job is done. Cheers.`,
+      body: `Hi ${name}, It's your turn on towel duty! They need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
       to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -339,7 +335,7 @@ app.get("/once_per_selected_days", async (req, res) => {
       await GarbageModel.findByIdAndRemove(id).exec()
 
       client.messages.create({
-        body: `Good Afternoon ${name}! Please Empty the Recycling, Green bin, and Garbage one last time so that ${next} may start his week with a clean slate. After that, you are free!`,
+        body: `Hi ${name}! Empty the Recycling, Green bin, and Garbage one last time so that ${next} may start his week with a clean slate. After that, you are free!`,
         to: numbers[choreIndividuals.indexOf(next)],
         from: TWILIO_PHONE_NUMBER,
       })
@@ -425,7 +421,7 @@ app.get("/once_per_selected_days", async (req, res) => {
     let name = garbageChore.name
 
     client.messages.create({
-      body: `Good Afternoon ${name}! Heads up, You're on garbage duty this week.`,
+      body: `Good Afternoon ${name}! Heads up, you're on garbage duty this week.`,
       to: numbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     })
@@ -462,8 +458,16 @@ app.get("/once_per_month", (req, res) => {
       try {
         await debt.save()
 
+        //Message lender (Duncan)
         client.messages.create({
-          body: `E-transfer Duncan $25 for the WiFi and text me ${code} once you have.`,
+          body: `Succesfully deployed your debt-collector on ${debtIndividuals[i]} for WiFi totalling $25!`,
+          to: numbers[debtIndividuals.indexOf("Duncan")],
+          from: TWILIO_PHONE_NUMBER,
+        })
+
+        // Message borrowers
+        client.messages.create({
+          body: `E-transfer Duncan $25 for the WiFi and text me "${code}" once you have.`,
           to: numbers[debtIndividuals[i]],
           from: TWILIO_PHONE_NUMBER,
         })
@@ -530,7 +534,7 @@ app.post("/sms", async (req, res) => {
         let borrower = names[i]
 
         client.messages.create({
-          body: `E-transfer ${sender} $${amount} for the ${reason} and text me ${code} once you have.`,
+          body: `E-transfer ${sender} $${amount} for the ${reason} and text me "${code}" once you have.`,
           to: numbers[debtIndividuals.indexOf(borrower)],
           from: TWILIO_PHONE_NUMBER,
         })
@@ -574,7 +578,7 @@ app.post("/sms", async (req, res) => {
 
       // Send a confirmation text to the lender
       twiml.message(`
-        Succesfully deployed your debt-collector on ${namesListed} for ${reason} totalling $${amount}! I'll let you once I've collected this for you.
+        Succesfully deployed your debt-collector on ${namesListed} for ${reason} totalling $${amount}!
       `)
     } else {
       twiml.message(`
@@ -659,14 +663,15 @@ app.post("/sms", async (req, res) => {
         let reason = debt.reason
         let amount = debt.amount
         let lender = debt.lender
+        let days = debt.days
 
         await DebtModel.findByIdAndRemove(id).exec()
         twiml.message(
-          `Hi ${sender}! I've confirmed that you've e-transferred ${lender} $${amount} for ${reason}. Thank you!`
+          `Hi ${sender}! I've confirmed that you've repaid ${lender} $${amount} for ${reason}. Thank you!`
         )
 
         client.messages.create({
-          body: `Hi ${lender}! I have just received confirmation that your debt-collector has succesfully collected on the $${amount} that ${sender} owed you for ${reason}!`,
+          body: `Hi ${lender}! ${sender} has repaid you the $${amount} he owed you for ${reason}! Took ${days} day(s).`,
           to: numbers[debtIndividuals.indexOf(lender)],
           from: TWILIO_PHONE_NUMBER,
         })
