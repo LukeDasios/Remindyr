@@ -377,6 +377,7 @@ app.get("/once_per_selected_days", async (req, res) => {
 
       try {
         await garbage_return_chore.save()
+        console.log(garbage_return_chore)
       } catch (err) {
         console.log(
           `Creation of new garbage_return_chore chore failed with error of: ${err}`
