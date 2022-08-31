@@ -36,7 +36,7 @@ const debtNumbers = [
 const choreIndividuals = ["Luke", "Justin"]
 const choreNumbers = ["+16479385063", "+16475247204"]
 
-const RENT_AMOUNT = 625
+const RENT_AMOUNT = 675
 
 function whoIsNext(name) {
   let index = choreIndividuals.indexOf(name)
