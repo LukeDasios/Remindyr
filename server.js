@@ -23,7 +23,7 @@ const GarbageModel = require("./models/Garbage");
 const GarbageReturnModel = require("./models/GarbageReturn");
 const TowelModel = require("./models/Towel");
 const DebtModel = require("./models/Debt");
-const KitchenCleanUpModel = require("./models/KitchenCleanUp");
+// const KitchenCleanUpModel = require("./models/KitchenCleanUp");
 
 const debtIndividuals = ["Luke", "Duncan", "Sam", "Jp", "Justin"];
 const debtNumbers = [
