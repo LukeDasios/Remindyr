@@ -23,7 +23,7 @@ const GarbageModel = require("./models/Garbage");
 const GarbageReturnModel = require("./models/GarbageReturn");
 const TowelModel = require("./models/Towel");
 const DebtModel = require("./models/Debt");
-// const KitchenCleanUpModel = require("./models/KitchenCleanUp");
+const KitchenCleanUpModel = require("./models/KitchenCleanUp");
 
 const debtIndividuals = ["Luke", "Duncan", "Sam", "Jp", "Justin"];
 const debtNumbers = [
@@ -243,11 +243,7 @@ app.get("/debt_reminder", async (req, res) => {
     });
 
     client.messages.create({
-      body: `Hi ${debt.borrower}! You owe ${debt.lender} $${debt.amount} for ${
-        debt.reason
-      }. Text me "${debt.code}" when you've repaid this. Outstanding for ${
-        debt.days
-      } day(s)`,
+      body: `Hi ${debt.borrower}! You owe ${debt.lender} $${debt.amount} for ${debt.reason}. Text me "${debt.code}" when you've repaid this. Outstanding for ${debt.days} day(s)`,
       to: debtNumbers[debtIndividuals.indexOf(debt.borrower)],
       from: TWILIO_PHONE_NUMBER,
     });
@@ -256,12 +252,36 @@ app.get("/debt_reminder", async (req, res) => {
   res.send("Sent today's debt-collection reminders!");
 });
 
-app.get("/weekly_chores_recurring_message", async (req, res) => {
+app.get("/weekly_chores_initial_message", async (req, res) => {
   let date = new Date();
   let day = date.getDay();
 
-  if (day === 2) {
-    // Garbage day
+  if (day === 0) {
+    // Sunday -> The person who is on garbage for the week is notified
+    let garbageChore = await GarbageModel.findOne({});
+    let name = garbageChore.name;
+
+    client.messages.create({
+      body: `Heads up ${name}, you're on garbage duty this week! Make sure you take out the recyclying, green bin, and garbage when they are full.`,
+      to: choreNumbers[choreIndividuals.indexOf(name)],
+      from: TWILIO_PHONE_NUMBER,
+    });
+  } else if (day === 1) {
+    // Monday -> KitchenCleanUp Day
+    let kitchenCleanUpChore = await KitchenCleanUpModel.findOne({});
+
+    if (kitchenCleanUpChore.counter === 0) {
+      let name = kitchenCleanUpChore.name;
+      let code = kitchenCleanUpChore.code;
+
+      client.messages.create({
+        body: `Hi ${name}! The Kitchen table, Dining room table, stovetop, and microwave need to be cleaned. Text me "${code}" when the job is done.`,
+        to: choreNumbers[choreIndividuals.indexOf(name)],
+        from: TWILIO_PHONE_NUMBER,
+      });
+    }
+  } else if (day === 2) {
+    // Tuesday -> Garbage day
     let garbageChore = await GarbageModel.findOne({});
 
     let name = garbageChore.name;
@@ -276,7 +296,7 @@ app.get("/weekly_chores_recurring_message", async (req, res) => {
       from: TWILIO_PHONE_NUMBER,
     });
   } else if (day === 3) {
-    // Bring garbage back to curb day
+    // Wednesday -> Bring garbage back to driveway day
     let garbageReturn = await GarbageReturnModel.findOne({});
 
     let name = garbageReturn.name;
@@ -287,22 +307,20 @@ app.get("/weekly_chores_recurring_message", async (req, res) => {
       to: choreNumbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     });
-  }
-  // else if (day === 4) {
-  //   // Towel day
-  //   let towelChore = await TowelModel.findOne({});
+  } else if (day === 4) {
+    // Thursday -> Towel day
+    let towelChore = await TowelModel.findOne({});
 
-  //   let name = towelChore.name;
-  //   let code = towelChore.code;
+    let name = towelChore.name;
+    let code = towelChore.code;
 
-  //   client.messages.create({
-  //     body: `Hi ${name}, It's your turn on towel duty! They need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
-  //     to: choreNumbers[choreIndividuals.indexOf(name)],
-  //     from: TWILIO_PHONE_NUMBER,
-  //   });
-  // }
-  else if (day === 6) {
-    //Saturday
+    client.messages.create({
+      body: `Hi ${name}, It's your turn on towel duty! They need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
+      to: choreNumbers[choreIndividuals.indexOf(name)],
+      from: TWILIO_PHONE_NUMBER,
+    });
+  } else if (day === 6) {
+    // Saturday -> Chore reset day
     let garbageChore = await GarbageModel.findOne({});
 
     console.log(garbageChore);
@@ -337,6 +355,14 @@ app.get("/weekly_chores_recurring_message", async (req, res) => {
           `Creation of new garbage chore failed with error of: ${err}`
         );
       }
+    } else {
+      // They didn't do the chore and the garbageWeek boolean still needs to toggle
+      const filter = { name: name };
+      const update = { garbageWeek: !garbageWeek };
+
+      await GarbageModel.findOneAndUpdate(filter, update, {
+        new: true,
+      });
     }
 
     let garbageReturnChore = await GarbageReturnModel.findOne({});
@@ -368,132 +394,190 @@ app.get("/weekly_chores_recurring_message", async (req, res) => {
           `Creation of new garbage_return_chore chore failed with error of: ${err}`
         );
       }
+    } else {
+      // They didn't do the chore and the garbageWeek boolean still needs to toggle
+      const filter = { name: name };
+      const update = { garbageWeek: !garbageWeek };
+
+      await GarbageReturnModel.findOneAndUpdate(filter, update, {
+        new: true,
+      });
     }
 
-    app.get("/weekly_chores_initial_message", async (req, res) => {
-      // Check to see if there are any outstanding important chores
-      // Message the person with the outstanding important chore
+    let towelChore = await TowelModel.findOne({});
 
-      let date = new Date();
-      let day = date.getDay();
+    console.log(towelChore);
 
-      if (day === 2) {
-        // Garbage Day
-        let garbageChore = await GarbageModel.findOne({});
+    id = towelChore.id;
+    name = towelChore.name;
+    completed = towelChore.completed;
+    next = towelChore.next;
+    counter = towelChore.counter;
 
-        console.log(garbageChore);
+    if (completed && counter === 0) {
+      await TowelModel.findByIdAndRemove(id).exec();
 
-        let name = garbageChore.name;
-        let code = garbageChore.code;
-        let garbageWeek = garbageChore.garbageWeek;
-        let completed = garbageChore.completed;
-        let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)];
+      const towel_chore = new TowelModel({
+        name: next,
+        code: generateTowelChoreCode(),
+        completed: false,
+        next: whoIsNext(next),
+        counter: 2,
+      });
 
-        if (!completed) {
-          client.messages.create({
-            body: garbageWeek
-              ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me "${code}" when the job is done.`
-              : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me "${code}" when the job is done.`,
-            to: phoneNumber,
-            from: TWILIO_PHONE_NUMBER,
-          });
-        }
-      } else if (day === 3) {
-        // Garbage Return Day
-        let garbageReturnChore = await GarbageReturnModel.findOne({});
-
-        console.log(garbageReturnChore);
-
-        let name = garbageReturnChore.name;
-        let code = garbageReturnChore.code;
-        let completed = garbageReturnChore.completed;
-        let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)];
-
-        if (!completed) {
-          client.messages.create({
-            body: `Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
-            to: phoneNumber,
-            from: TWILIO_PHONE_NUMBER,
-          });
-        }
+      try {
+        await towel_chore.save();
+        console.log(towel_chore);
+      } catch (err) {
+        console.log(
+          `Creation of new towel_chore chore failed with error of: ${err}`
+        );
       }
+    } else if (!completed && counter > 0) {
+      const filter = { name: name };
+      const update = { counter: counter - 1 };
 
-      // Will become a bi-weekly job in Fall 2022, will revert this in Winter 2023
-      // else if (day === 4) {
-      //   // Towel Day
-      //   let towelChore = await TowelModel.findOne({})
+      await TowelModel.findOneAndUpdate(filter, update, {
+        new: true,
+      });
+    }
 
-      //   console.log(towelChore)
+    let kitchenCleanUpChore = await KitchenCleanUpModel.findOne({});
 
-      //   let name = towelChore.name
-      //   let code = towelChore.code
-      //   let completed = towelChore.completed
-      //   let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)]
+    console.log(kitchenCleanUpChore);
 
-      //   if (!completed) {
-      //     client.messages.create({
-      //       body: `Hi ${name}! The towels need to be washed, dryed, folded, and put back. Text me "${code}" when the job is done.`,
-      //       to: phoneNumber,
-      //       from: TWILIO_PHONE_NUMBER,
-      //     })
-      //   }
-      // }
-      res.send("Sent an important chore reminder!");
-    });
+    id = kitchenCleanUpChore.id;
+    name = kitchenCleanUpChore.name;
+    completed = kitchenCleanUpChore.completed;
+    next = kitchenCleanUpChore.next;
+    counter = kitchenCleanUpChore.counter;
 
-    // let towelChore = await TowelModel.findOne({});
+    if (completed && counter === 0) {
+      await KitchenCleanUpModel.findByIdAndRemove(id).exec();
 
-    // console.log(towelChore);
+      const kitchen_clean_up_chore = new KitchenCleanUpModel({
+        name: next,
+        code: generateKitchenCleanUpCode(),
+        completed: false,
+        next: whoIsNext(next),
+        counter: 2,
+      });
 
-    // id = towelChore.id;
-    // name = towelChore.name;
-    // completed = towelChore.completed;
-    // next = towelChore.next;
+      try {
+        await kitchen_clean_up_chore.save();
+        console.log(kitchen_clean_up_chore);
+      } catch (err) {
+        console.log(
+          `Creation of new kitchen_clean_up_chore chore failed with error of: ${err}`
+        );
+      }
+    } else if (!completed && counter > 0) {
+      const filter = { name: name };
+      const update = { counter: counter - 1 };
 
-    // if (completed) {
-    //   await TowelModel.findByIdAndRemove(id).exec();
+      await KitchenCleanUpModel.findOneAndUpdate(filter, update, {
+        new: true,
+      });
+    }
+  }
+});
 
-    //   const towel_chore = new TowelModel({
-    //     name: next,
-    //     code: generateTowelChoreCode(),
-    //     completed: false,
-    //     next: whoIsNext(next),
-    //   });
+app.get("/weekly_chores_recurring_message", async (req, res) => {
+  let date = new Date();
+  let day = date.getDay();
 
-    //   try {
-    //     await towel_chore.save();
-    //   } catch (err) {
-    //     console.log(`Creation of new towel chore failed with error of: ${err}`);
-    //   }
-    // }
+  if (day === 1) {
+    // Monday -> Kitchen Clean Up Day
+    let kitchenCleanUpChore = await KitchenCleanUpModel.findOne({});
 
-    res.send(`Updated the garbage, garbageReturn, and towel documents.`);
-  } else {
-    //Sunday
+    console.log(kitchenCleanUpChore);
+
+    let name = kitchenCleanUpChore.name;
+    let code = kitchenCleanUpChore.code;
+    let counter = kitchenCleanUpChore.counter;
+    let completed = kitchenCleanUpChore.completed;
+    let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)];
+
+    if (!completed && counter === 0) {
+      client.messages.create({
+        body: `Hi ${name}! The Kitchen table, dining room table, stovetop, and microwave need to be cleaned. Text me "${code}" when the job is done!`,
+        to: phoneNumber,
+        from: TWILIO_PHONE_NUMBER,
+      });
+    }
+  } else if (day === 2) {
+    // Tuesday -> Garbage Day
     let garbageChore = await GarbageModel.findOne({});
 
+    console.log(garbageChore);
+
     let name = garbageChore.name;
+    let code = garbageChore.code;
+    let garbageWeek = garbageChore.garbageWeek;
+    let completed = garbageChore.completed;
+    let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)];
 
-    client.messages.create({
-      body: `Good Afternoon ${name}! Heads up, you're on garbage duty this week.`,
-      to: choreNumbers[choreIndividuals.indexOf(name)],
-      from: TWILIO_PHONE_NUMBER,
-    });
+    if (!completed) {
+      client.messages.create({
+        body: garbageWeek
+          ? `Hi ${name}! The Recycling, Compost, and Garbage need to be taken to the curb by tonight. Text me "${code}" when the job is done.`
+          : `Hi ${name}! The Recycling and Compost need to be taken to the curb by tonight. Text me "${code}" when the job is done.`,
+        to: phoneNumber,
+        from: TWILIO_PHONE_NUMBER,
+      });
+    }
+  } else if (day === 3) {
+    // Wedsnesday -> Garbage Return Day
+    let garbageReturnChore = await GarbageReturnModel.findOne({});
 
-    res.send(`Told ${name} that they are on garbage this week`);
+    console.log(garbageReturnChore);
+
+    let name = garbageReturnChore.name;
+    let code = garbageReturnChore.code;
+    let completed = garbageReturnChore.completed;
+    let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)];
+
+    if (!completed) {
+      client.messages.create({
+        body: `Hi ${name}! Everything needs to be brought back to the house from the curb. Text me "${code}" when the job is done.`,
+        to: phoneNumber,
+        from: TWILIO_PHONE_NUMBER,
+      });
+    }
+  } else if (day === 4) {
+    // Thursday -> Towel Day
+    let towelChore = await TowelModel.findOne({});
+
+    console.log(towelChore);
+
+    let name = towelChore.name;
+    let code = towelChore.code;
+    let completed = towelChore.completed;
+    let counter = towelChore.counter;
+    let phoneNumber = choreNumbers[choreIndividuals.indexOf(name)];
+
+    if (!completed && counter === 0) {
+      client.messages.create({
+        body: `Hi ${name}! The towels need to be washed, dryed, folded, and put back to their respective drawer. Text me "${code}" when the job is done.`,
+        to: phoneNumber,
+        from: TWILIO_PHONE_NUMBER,
+      });
+    }
   }
 });
 
 app.post("/sms", async (req, res) => {
+  let date = new Date();
+  let day = date.getDay();
   let originalMsg = req.body.Body.trim();
   let msg = originalMsg.toLowerCase();
   let senderNumber = req.body.From;
   let sender = debtIndividuals[debtNumbers.indexOf(senderNumber)];
   const twiml = new MessagingResponse();
 
-  if (msg.includes("commands")) {
+  if (msg.includes("services")) {
     twiml.message(`
-    Commands:\n\nCommands -> what I do\n\nOrigin -> why I exist\n\nDC -> collect $ from your roomates\n\nOutstanding -> see outstanding debts\n\nSchedule -> see who's doing what chore this week`);
+    Services:\n\nServices -> what I do\n\nOrigin -> why I exist\n\nDC -> collect $ from your roomates\n\nOutstanding -> see outstanding debts\n\nSchedule -> see who's doing what chore this week`);
   } else if (msg.includes("origin")) {
     twiml.message(`
     \nYou lead an extremely busy life. You've got exams to ace, deadlines to meet, and a limited memory ;). Why bother remembering the small stuff when you've bigger things to worry about? That's where I, Twilly 🤖, help out. Delegate the small stuff to me so you can focus on the things that really matter ❤️
@@ -588,28 +672,28 @@ app.post("/sms", async (req, res) => {
     }
   } else if (msg.length === 5) {
     msg = msg.toUpperCase();
-    if (msg[0] === "T") {
-      // The person is trying to confirm the completion of the towel chore
-      let towelChore = await TowelModel.findOne({});
-      let code = towelChore.code;
+    if (msg[0] === "K" && day === 1) {
+      // The person is trying to confirm the completion of the kitchen clean up chore
+      let kitchenCleanUpChore = await KitchenCleanUpModel.findOne({});
+      let code = kitchenCleanUpChore.code;
 
       if (code === originalMsg) {
-        const filter = { name: towelChore.name };
+        const filter = { name: kitchenCleanUpChore.name };
         const update = { completed: true };
 
-        await TowelModel.findOneAndUpdate(filter, update, {
+        await KitchenCleanUpModel.findOneAndUpdate(filter, update, {
           new: true,
         });
 
         twiml.message(
-          `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
+          `Hi ${sender}! I've confirmed that you've completed the kitchen clean up chore. Thank you!`
         );
       } else {
         twiml.message(
           `Sorry, I don't understand. Are you sure that's a valid code?`
         );
       }
-    } else if (msg[0] === "G") {
+    } else if (msg[0] === "G" && day === 2) {
       let garbageChore = await GarbageModel.findOne({});
       let code = garbageChore.code;
 
@@ -629,7 +713,7 @@ app.post("/sms", async (req, res) => {
           `Sorry, I don't understand. Are you sure that's a valid code?`
         );
       }
-    } else if (msg[0] === "R") {
+    } else if (msg[0] === "R" && day === 3) {
       let garbageReturnChore = await GarbageReturnModel.findOne({});
       let code = garbageReturnChore.code;
 
@@ -643,6 +727,27 @@ app.post("/sms", async (req, res) => {
 
         twiml.message(
           `Hi ${sender}! I've confirmed that you've completed the garbage return chore. Thank you!`
+        );
+      } else {
+        twiml.message(
+          `Sorry, I don't understand. Are you sure that's a valid code?`
+        );
+      }
+    } else if (msg[0] === "T" && day === 4) {
+      // The person is trying to confirm the completion of the towel chore
+      let towelChore = await TowelModel.findOne({});
+      let code = towelChore.code;
+
+      if (code === originalMsg) {
+        const filter = { name: towelChore.name };
+        const update = { completed: true };
+
+        await TowelModel.findOneAndUpdate(filter, update, {
+          new: true,
+        });
+
+        twiml.message(
+          `Hi ${sender}! I've confirmed that you've completed the towel chore. Thank you!`
         );
       } else {
         twiml.message(

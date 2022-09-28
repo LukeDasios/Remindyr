@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const TowelSchema = new mongoose.Schema({
+const KitchenCleanUpSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -23,5 +23,5 @@ const TowelSchema = new mongoose.Schema({
   },
 });
 
-const Towel = mongoose.model("Towel", TowelSchema);
-module.exports = Towel;
+const KitchenCleanUp = mongoose.model("KitchenCleanUp", KitchenCleanUpSchema);
+module.exports = KitchenCleanUp;
