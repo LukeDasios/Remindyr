@@ -480,6 +480,8 @@ app.get("/weekly_chores_initial_message", async (req, res) => {
       });
     }
   }
+
+  res.send("Sent today's initial chore reminder!");
 });
 
 app.get("/weekly_chores_recurring_message", async (req, res) => {
@@ -564,6 +566,8 @@ app.get("/weekly_chores_recurring_message", async (req, res) => {
       });
     }
   }
+
+  res.send("Sent today's recurring chore reminder!");
 });
 
 app.post("/sms", async (req, res) => {
