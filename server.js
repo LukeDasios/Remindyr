@@ -177,6 +177,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/rent-reminder", async (req, res) => {
+  // Contact's reminder (just for me)
+  client.messages.create({
+    body: `Hello Luke! Remember to change your monthly contacts.`,
+    to: debtNumbers[debtIndividuals.indexOf("Luke")],
+    from: TWILIO_PHONE_NUMBER,
+  });
+
   // Rent reminder
   for (let i = 0; i < debtIndividuals.length; i++) {
     client.messages.create({
