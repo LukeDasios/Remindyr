@@ -804,7 +804,7 @@ app.post("/sms", async (req, res) => {
     }
   } else {
     twiml.message(
-      `Sorry, I don't understand. Text me "commands" to learn about how I can assist you.`
+      `Sorry, I don't understand. Text me "services" to learn about how I can assist you.`
     );
   }
 
