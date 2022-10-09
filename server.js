@@ -177,9 +177,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/rent-reminder", async (req, res) => {
-  // Contact's reminder (just for me)
+  // Contacts reminder (just for me)
   client.messages.create({
-    body: `Hello Luke! Remember to change your monthly contacts.`,
+    body: `Hello Luke! Remember to change your monthly contact.`,
     to: debtNumbers[debtIndividuals.indexOf("Luke")],
     from: TWILIO_PHONE_NUMBER,
   });
@@ -215,13 +215,6 @@ app.get("/rent-reminder", async (req, res) => {
         client.messages.create({
           body: `Succesfully deployed your debt-collector on ${debtIndividuals[i]} for WiFi totalling $25!`,
           to: debtNumbers[debtIndividuals.indexOf("Duncan")],
-          from: TWILIO_PHONE_NUMBER,
-        });
-
-        // Message borrowers
-        client.messages.create({
-          body: `E-transfer Duncan $25 for the WiFi and text me "${code}" once you have.`,
-          to: debtNumbers[debtIndividuals[i]],
           from: TWILIO_PHONE_NUMBER,
         });
 
