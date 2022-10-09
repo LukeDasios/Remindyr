@@ -119,48 +119,8 @@ function validDebtCollectorUsage(msg) {
   };
 }
 
-function generateGarbageChoreCode() {
-  let code = "G";
-
-  for (let i = 0; i < 4; i++) {
-    code += Math.floor(Math.random() * 10).toString();
-  }
-
-  return code;
-}
-
-function generateGarbageReturnChoreCode() {
-  let code = "R";
-
-  for (let i = 0; i < 4; i++) {
-    code += Math.floor(Math.random() * 10).toString();
-  }
-
-  return code;
-}
-
-function generateTowelChoreCode() {
-  let code = "T";
-
-  for (let i = 0; i < 4; i++) {
-    code += Math.floor(Math.random() * 10).toString();
-  }
-
-  return code;
-}
-
-function generateDebtCollectionCode() {
-  let code = "D";
-
-  for (let i = 0; i < 4; i++) {
-    code += Math.floor(Math.random() * 10).toString();
-  }
-
-  return code;
-}
-
-function generateKitchenCleanUpCode() {
-  let code = "K";
+function generateCode(letter) {
+  let code = letter
 
   for (let i = 0; i < 4; i++) {
     code += Math.floor(Math.random() * 10).toString();
@@ -197,7 +157,7 @@ app.get("/rent-reminder", async (req, res) => {
   for (let i = 0; i < debtIndividuals.length; i++) {
     if (debtIndividuals[i] !== "Duncan") {
       // Create a new debt
-      let code = generateDebtCollectionCode();
+      let code = generateCode("D");
 
       const debt = new DebtModel({
         lender: "Duncan",
@@ -342,7 +302,7 @@ app.get("/weekly_chores_initial_message", async (req, res) => {
 
       const garbage_chore = new GarbageModel({
         name: next,
-        code: generateGarbageChoreCode(),
+        code: generateCode("G"),
         garbageWeek: !garbageWeek,
         completed: false,
         next: whoIsNext(next),
@@ -380,7 +340,7 @@ app.get("/weekly_chores_initial_message", async (req, res) => {
 
       const garbage_return_chore = new GarbageReturnModel({
         name: next,
-        code: generateGarbageReturnChoreCode(),
+        code: generateCode("R"),
         garbageWeek: !garbageWeek,
         completed: false,
         next: whoIsNext(next),
@@ -419,7 +379,7 @@ app.get("/weekly_chores_initial_message", async (req, res) => {
 
       const towel_chore = new TowelModel({
         name: next,
-        code: generateTowelChoreCode(),
+        code: generateCode("T"),
         completed: false,
         next: whoIsNext(next),
         counter: 2,
@@ -457,7 +417,7 @@ app.get("/weekly_chores_initial_message", async (req, res) => {
 
       const kitchen_clean_up_chore = new KitchenCleanUpModel({
         name: next,
-        code: generateKitchenCleanUpCode(),
+        code: generateCode("K"),
         completed: false,
         next: whoIsNext(next),
         counter: 2,
@@ -616,7 +576,7 @@ app.post("/sms", async (req, res) => {
       names = obj.names;
       reason = obj.reason;
 
-      let code = generateDebtCollectionCode();
+      let code = generateCode("D");
 
       // Text all the borrowers
       for (let i = 0; i < names.length; i++) {
