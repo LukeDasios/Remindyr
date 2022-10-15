@@ -164,7 +164,7 @@ app.get("/rent-reminder", async (req, res) => {
         borrower: debtIndividuals[i],
         code: code,
         amount: 25,
-        reason: "Wifi",
+        reason: "WiFi",
         days: 0,
       });
 
