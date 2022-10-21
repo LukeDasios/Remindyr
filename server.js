@@ -120,7 +120,7 @@ function validDebtCollectorUsage(msg) {
 }
 
 function generateCode(letter) {
-  let code = letter
+  let code = letter;
 
   for (let i = 0; i < 4; i++) {
     code += Math.floor(Math.random() * 10).toString();
@@ -636,7 +636,7 @@ app.post("/sms", async (req, res) => {
     }
   } else if (msg.length === 5) {
     msg = msg.toUpperCase();
-    if (msg[0] === "K" && day === 1) {
+    if (msg[0] === "K") {
       // The person is trying to confirm the completion of the kitchen clean up chore
       let kitchenCleanUpChore = await KitchenCleanUpModel.findOne({});
       let code = kitchenCleanUpChore.code;
@@ -657,7 +657,7 @@ app.post("/sms", async (req, res) => {
           `Sorry, I don't understand. Are you sure that's a valid code?`
         );
       }
-    } else if (msg[0] === "G" && day === 2) {
+    } else if (msg[0] === "G") {
       let garbageChore = await GarbageModel.findOne({});
       let code = garbageChore.code;
 
@@ -677,7 +677,7 @@ app.post("/sms", async (req, res) => {
           `Sorry, I don't understand. Are you sure that's a valid code?`
         );
       }
-    } else if (msg[0] === "R" && day === 3) {
+    } else if (msg[0] === "R") {
       let garbageReturnChore = await GarbageReturnModel.findOne({});
       let code = garbageReturnChore.code;
 
@@ -697,7 +697,7 @@ app.post("/sms", async (req, res) => {
           `Sorry, I don't understand. Are you sure that's a valid code?`
         );
       }
-    } else if (msg[0] === "T" && day === 4) {
+    } else if (msg[0] === "T") {
       // The person is trying to confirm the completion of the towel chore
       let towelChore = await TowelModel.findOne({});
       let code = towelChore.code;
