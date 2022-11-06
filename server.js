@@ -576,11 +576,10 @@ app.post("/sms", async (req, res) => {
       names = obj.names;
       reason = obj.reason;
 
-      let code = generateCode("D");
-
       // Text all the borrowers
       for (let i = 0; i < names.length; i++) {
         let borrower = names[i];
+        let code = generateCode("D");
 
         client.messages.create({
           body: `E-transfer ${sender} $${amount} for the ${reason} and text me "${code}" once you have.`,
