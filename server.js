@@ -219,11 +219,11 @@ app.get("/weekly_chores_initial_message", async (req, res) => {
   if (day === 0) {
     // Sunday -> The person who is on garbage for the week is notified
     let garbageChore = await GarbageModel.findOne({});
-    let next = garbageChore.next;
+    let name = garbageChore.name;
 
     client.messages.create({
-      body: `Heads up ${next}, you're on garbage duty this week! Make sure you take out the recyclying, green bin, and garbage when they are full.`,
-      to: choreNumbers[choreIndividuals.indexOf(next)],
+      body: `Heads up ${name}, you're on garbage duty this week! Make sure you take out the recyclying, green bin, and garbage when they are full.`,
+      to: choreNumbers[choreIndividuals.indexOf(name)],
       from: TWILIO_PHONE_NUMBER,
     });
   } else if (day === 1) {
