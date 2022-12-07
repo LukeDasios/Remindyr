@@ -34,7 +34,7 @@ const debtNumbers = [
   "+16475247204",
 ];
 
-const choreIndividuals = ["Luke", "Justin"];
+// const choreIndividuals = ["Luke", "Justin"];
 const choreNumbers = ["+16479385063", "+16475247204"];
 
 const RENT_AMOUNT = 675;
