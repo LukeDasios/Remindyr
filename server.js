@@ -159,7 +159,7 @@ app.get("/rent-reminder", async (req, res) => {
       // Create a new debt
       let code = generateCode("D");
 
-      const debt = new DebtModel({
+      const wifiDebt = new DebtModel({
         lender: "Duncan",
         borrower: debtIndividuals[i],
         code: code,
@@ -169,7 +169,7 @@ app.get("/rent-reminder", async (req, res) => {
       });
 
       try {
-        await debt.save();
+        await wifiDebt.save();
 
         //Message lender (Duncan)
         client.messages.create({
@@ -178,8 +178,41 @@ app.get("/rent-reminder", async (req, res) => {
           from: TWILIO_PHONE_NUMBER,
         });
 
-        console.log(debt);
+        console.log(wifiDebt);
         console.log("Succesfully created the new wifi debt!");
+      } catch (err) {
+        console.log(`Creation of new debt failed with error of: ${err}`);
+      }
+    }
+  }
+
+  // Twilly Costs reminder
+  for (let i = 0; i < debtIndividuals.length; i++) {
+    if (debtIndividuals[i] !== "Luke") {
+      // Create a new debt
+      let code = generateCode("L");
+
+      const twillyDebt = new DebtModel({
+        lender: "Luke",
+        borrower: debtIndividuals[i],
+        code: code,
+        amount: 4,
+        reason: "Twilly costs",
+        days: 0,
+      });
+
+      try {
+        await twillyDebt.save();
+
+        //Message lender (Luke)
+        client.messages.create({
+          body: `Succesfully deployed your debt-collector on ${debtIndividuals[i]} for twilly costs totalling $4!`,
+          to: debtNumbers[debtIndividuals.indexOf("Luke")],
+          from: TWILIO_PHONE_NUMBER,
+        });
+
+        console.log(twillyDebt);
+        console.log("Succesfully created the new twilly debt!");
       } catch (err) {
         console.log(`Creation of new debt failed with error of: ${err}`);
       }
