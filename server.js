@@ -229,7 +229,7 @@ app.get("/debt_reminder", async (req, res) => {
     let debt = debts[i];
 
     const filter = { code: debt.code };
-    const update = { days: debt.days + 1 };
+    const update = { days: debt.days + 3 };
 
     await DebtModel.findOneAndUpdate(filter, update, {
       new: true,
@@ -591,7 +591,7 @@ app.post("/sms", async (req, res) => {
     let debts = await DebtModel.find({lender: sender});
     let totalAmount = 0, totalDays = 0
 
-    let currentDebts = "Outstanding Debts:\n\n";
+    let currentDebts = "Breakdown:\n\n";
 
     for (let i = 0; i < debts.length; i++) {
       let debt = debts[i];
@@ -600,7 +600,7 @@ app.post("/sms", async (req, res) => {
       totalDays += debt.days
     }
 
-    let finalMessage = `You are collectively owed $${totalAmount} over ${totalDays} days` + "\n\n" + "Breakdown:\n"
+    let finalMessage = `You are collectively owed $${totalAmount} over ${totalDays} days` + "\n\n"
 
     if (totalAmount === 0) {
       twiml.message("You have no outstanding loans.");
