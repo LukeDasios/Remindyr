@@ -229,7 +229,7 @@ app.get("/debt_reminder", async (req, res) => {
     let debt = debts[i];
 
     const filter = { code: debt.code };
-    const update = { days: debt.days + 3 };
+    const update = { days: debt.days + 1 };
 
     await DebtModel.findOneAndUpdate(filter, update, {
       new: true,
