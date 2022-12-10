@@ -589,15 +589,24 @@ app.post("/sms", async (req, res) => {
     twiml.message(schedule);
   } else if (msg.includes("outstanding")) {
     let debts = await DebtModel.find({lender: sender});
+    let totalAmount = 0, totalDays = 0
 
     let currentDebts = "Outstanding Debts:\n\n";
 
     for (let i = 0; i < debts.length; i++) {
       let debt = debts[i];
       currentDebts += `${debt.borrower} owes you $${debt.amount} for ${debt.reason}\nDays Outstanding: ${debt.days}\n\n`;
+      totalAmount += debt.amount
+      totalDays += debt.days
     }
 
-    twiml.message(currentDebts);
+    let finalMessage = `You are collectively owed $${totalAmount} over ${totalDays} days` + "\n\n" + "Breakdown:\n"
+
+    if (totalAmount === 0) {
+      twiml.message("You have no outstanding loans.");
+    } else {
+      twiml.message(finalMessage + currentDebts);
+    }
   } else if (msg.includes("dc")) {
     twiml.message(`
       The debt-collector service is used to collect money from your roomates without having to chase them down. I do that by reminding the borrower(s) every day of their oustanding debt until they e-transfer you.\n\nExample usage:\n\n#1: You bought Sam pizza\ncollect 5 from Sam for pizza\n\n#2: You bought Justin and Duncan pizza (each owe you 5)\ncollect 10 from Justin, Duncan for pizza
