@@ -588,13 +588,13 @@ app.post("/sms", async (req, res) => {
 
     twiml.message(schedule);
   } else if (msg.includes("outstanding")) {
-    let debts = await DebtModel.find({});
+    let debts = await DebtModel.find({lender: sender});
 
     let currentDebts = "Outstanding Debts:\n\n";
 
     for (let i = 0; i < debts.length; i++) {
       let debt = debts[i];
-      currentDebts += `${debt.borrower} owes ${debt.lender} $${debt.amount} for ${debt.reason}\nDays Outstanding: ${debt.days}\n\n`;
+      currentDebts += `${debt.borrower} owes you $${debt.amount} for ${debt.reason}\nDays Outstanding: ${debt.days}\n\n`;
     }
 
     twiml.message(currentDebts);
